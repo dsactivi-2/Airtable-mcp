@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ilvana Airtable MCP",
-    "version": "1.1.0",
-    "description": "Kandidaten-CRM der Ilvana i Hase: Suche, Akte, Schreiben, Uploads, Automatik, Protokoll, Datenqualität."
+    "version": "1.2.0",
+    "description": "Kandidaten-CRM: Suche, Akte, Schreiben, Uploads, Automatik, Protokoll, Konfiguration und Base-Änderungen."
   },
   "servers": [
     {
@@ -66,7 +66,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -151,7 +151,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -349,7 +349,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -421,7 +421,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -462,7 +462,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -503,7 +503,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -556,7 +556,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -589,7 +589,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -630,7 +630,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -691,7 +691,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -783,7 +783,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -837,7 +837,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -902,7 +902,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -983,7 +983,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -1087,7 +1087,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -1137,7 +1137,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -1202,7 +1202,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -1233,7 +1233,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -1303,7 +1303,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -1334,7 +1334,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -1365,7 +1365,7 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
           }
         }
       }
@@ -1411,7 +1411,399 @@
         },
         "responses": {
           "200": {
-            "description": "JSON-Ergebnis mit success und result"
+            "description": "JSON mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/hook_test": {
+      "post": {
+        "operationId": "hook_test",
+        "summary": "Testet die Anbindung an Airtable-Automationen: zeigt Hook-URL, Header und was ein Aufruf auslösen würde — ohne etwas zu ",
+        "description": "Testet die Anbindung an Airtable-Automationen: zeigt Hook-URL, Header und was ein Aufruf auslösen würde — ohne etwas zu schreiben.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "record_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Datensatz für den Test (optional)",
+                    "title": "Record Id"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/config_get": {
+      "post": {
+        "operationId": "config_get",
+        "summary": "Aktuelle Konfiguration anzeigen: Standard-Base, ob Alarm-Webhook und Hook-Secret gesetzt sind.",
+        "description": "Aktuelle Konfiguration anzeigen: Standard-Base, ob Alarm-Webhook und Hook-Secret gesetzt sind.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/config_set": {
+      "post": {
+        "operationId": "config_set",
+        "summary": "Konfiguration ändern: Alarm-Webhook, Hook-Secret, Standard-Base — wirkt sofort, ohne Redeploy.",
+        "description": "Konfiguration ändern: Alarm-Webhook, Hook-Secret, Standard-Base — wirkt sofort, ohne Redeploy.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "alert_webhook_url": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "HTTPS-Adresse für Alarme",
+                    "title": "Alert Webhook Url"
+                  },
+                  "hook_secret": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Gemeinsames Passwort für /hooks/airtable",
+                    "title": "Hook Secret"
+                  },
+                  "default_base": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "kopieren",
+                          "original"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Base, wenn ein Aufruf keine nennt",
+                    "title": "Default Base"
+                  },
+                  "clear": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Schlüssel entfernen, z.B. ['alert_webhook_url']",
+                    "title": "Clear"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/table_create": {
+      "post": {
+        "operationId": "table_create",
+        "summary": "Neue Tabelle in der Base anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
+        "description": "Neue Tabelle in der Base anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "description": "Name der neuen Tabelle",
+                    "maxLength": 80,
+                    "minLength": 1,
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "fields": {
+                    "description": "Felder: [{\"name\": \"Name\", \"type\": \"singleLineText\"}]",
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "title": "Fields",
+                    "type": "array"
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Description"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "preview": {
+                    "default": true,
+                    "description": "true = nur zeigen, was gesendet würde",
+                    "title": "Preview",
+                    "type": "boolean"
+                  },
+                  "confirm": {
+                    "default": false,
+                    "description": "Muss true sein, damit die Tabelle entsteht",
+                    "title": "Confirm",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name",
+                  "fields"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/field_create": {
+      "post": {
+        "operationId": "field_create",
+        "summary": "Neues Feld in einer Tabelle anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
+        "description": "Neues Feld in einer Tabelle anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "table": {
+                    "description": "Tabellenname oder Schlüssel (prijave, casting, tasks)",
+                    "title": "Table",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Feldname",
+                    "maxLength": 80,
+                    "minLength": 1,
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Airtable-Feldtyp, z.B. singleLineText, singleSelect, date, number",
+                    "title": "Type",
+                    "type": "string"
+                  },
+                  "options": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optionen, z.B. choices für singleSelect",
+                    "title": "Options"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "preview": {
+                    "default": true,
+                    "title": "Preview",
+                    "type": "boolean"
+                  },
+                  "confirm": {
+                    "default": false,
+                    "title": "Confirm",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "table",
+                  "name",
+                  "type"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/field_update": {
+      "post": {
+        "operationId": "field_update",
+        "summary": "Feld umbenennen oder Auswahlwerte ändern (Vorschau zuerst, echte Änderung nur mit confirm).",
+        "description": "Feld umbenennen oder Auswahlwerte ändern (Vorschau zuerst, echte Änderung nur mit confirm).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "table": {
+                    "description": "Tabellenname oder Schlüssel",
+                    "title": "Table",
+                    "type": "string"
+                  },
+                  "field_id": {
+                    "description": "Feld-ID fld…",
+                    "title": "Field Id",
+                    "type": "string"
+                  },
+                  "name": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Neuer Name",
+                    "title": "Name"
+                  },
+                  "options": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Neue Optionen (z.B. choices)",
+                    "title": "Options"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "preview": {
+                    "default": true,
+                    "title": "Preview",
+                    "type": "boolean"
+                  },
+                  "confirm": {
+                    "default": false,
+                    "title": "Confirm",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "table",
+                  "field_id"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON mit success und result"
           }
         }
       }
