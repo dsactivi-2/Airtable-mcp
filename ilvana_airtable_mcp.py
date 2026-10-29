@@ -79,8 +79,15 @@ EARLY_STATUSES = {"Zainteresiran", "Zeleni / obrada"}
 TZ = ZoneInfo("Europe/Sarajevo")
 SCHEMA_TTL = 300
 
-SERVICE_VERSION = "1.5.2"
+SERVICE_VERSION = "1.5.3"
 SERVICE_CHANGELOG: list[dict[str, Any]] = [
+    {
+        "version": "1.5.3",
+        "date": "2026-10-29",
+        "changes": [
+            "GET /openapi.json liefert die vollständige Werkzeug-Spec — direkt importierbar bei ChatGPT-Actions und Grok",
+        ],
+    },
     {
         "version": "1.5.2",
         "date": "2026-10-29",
@@ -2363,6 +2370,58 @@ async def service_info() -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------- FastAPI app
+def _build_openapi() -> dict[str, Any]:
+    """Complete OpenAPI document with every tool as an operation (for ChatGPT/Grok)."""
+    paths: dict[str, Any] = {}
+    for name, model in MODELS.items():
+        schema = model.model_json_schema()
+        schema.pop("$defs", None)
+        schema.pop("title", None)
+        schema.setdefault("type", "object")
+        paths[f"/tools/{name}"] = {
+            "post": {
+                "operationId": name,
+                "summary": TOOL_DOCS.get(name, name)[:120],
+                "description": TOOL_DOCS.get(name, name),
+                "requestBody": {
+                    "required": True,
+                    "content": {"application/json": {"schema": schema}},
+                },
+                "responses": {"200": {"description": "JSON mit success und result"}},
+            }
+        }
+    paths["/health"] = {
+        "get": {
+            "operationId": "health",
+            "summary": "Status und Version des Dienstes",
+            "responses": {"200": {"description": "status, version, tools"}},
+        }
+    }
+    return {
+        "openapi": "3.1.0",
+        "info": {
+            "title": "Ilvana Airtable MCP",
+            "version": SERVICE_VERSION,
+            "description": (
+                "Kandidaten-CRM der Ilvana i Hase: Suche, Akte, Anlegen, Ändern, Uploads, "
+                "Automatik, Protokoll, Alarme, Konfiguration, Base-Änderungen."
+            ),
+        },
+        "servers": [{"url": "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7"}],
+        "security": [{"bearerAuth": []}],
+        "components": {
+            "securitySchemes": {
+                "bearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "description": "CodeWords API Key",
+                }
+            }
+        },
+        "paths": paths,
+    }
+
+
 def create_fastapi_app() -> FastAPI:
     starlette_app = fast_app.streamable_http_app()
     app = FastAPI(
@@ -2378,6 +2437,8 @@ def create_fastapi_app() -> FastAPI:
         middleware=starlette_app.user_middleware,
         lifespan=starlette_app.router.lifespan_context,
     )
+
+    app.openapi = _build_openapi  # type: ignore[assignment]
 
     @app.exception_handler(AirtableError)
     async def airtable_error_handler(request: Request, exc: AirtableError) -> JSONResponse:
