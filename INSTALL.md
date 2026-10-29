@@ -113,13 +113,15 @@ In Airtable von Hand löschen (der Dienst darf nicht löschen):
 
 ## 7. Tageslauf scharf stellen
 
-Aktuell: **Vorschau**, täglich 07:00 Europe/Sarajevo (`cron(0 6 * * ? *)`).
+Aktiv: **apply**, täglich 07:00 UTC (`cron(0 7 * * ? *)` — das ist 08:00 Europe/Sarajevo).
+
+Der Modus steckt im JSON-Body, nicht in der URL (Query-Parameter kommen über die Runtime nicht an):
 
 Der Lauf prüft alle Bewerbungen, erzeugt den Tagesbericht und zeigt geplante Folgeaufgaben — ohne zu
 schreiben. Wenn die Regeln fachlich passen:
 
 ```bash
-curl -X POST "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/automation/daily?mode=apply" \
+curl -X POST "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/automation/daily" \
   -H "Authorization: Bearer $CODEWORDS_API_KEY"
 ```
 
