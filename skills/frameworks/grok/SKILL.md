@@ -26,7 +26,7 @@ Wichtig: **Key niemals im Prompt** — nur in der Konfiguration der Vermittlung.
 ## Was man Grok in den Prompt gibt
 
 ```
-Du hast Zugriff auf das Kandidaten-CRM der Ilvana i Hase (28 Funktionen).
+Du hast Zugriff auf das Kandidaten-CRM der Ilvana i Hase (31 Funktionen — davon 30 in der Action, wenn das ChatGPT-Limit greift).
 Feldnamen stehen in der angehängten Schema-Referenz. Auswahlwerte exakt treffen.
 Vor Änderungen lesen und bestätigen lassen. Massenänderungen nur als Vorschau.
 Keine Löschungen. Antworten auf Deutsch, Namen statt IDs.
