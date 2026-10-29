@@ -105,3 +105,14 @@ Ist `HOOK_SECRET` gesetzt, ist der Header `X-Hook-Secret` Pflicht.
 
 Vollständige Anleitung inklusive der drei Variablen (`AIRTABLE_PAT`, `HOOK_SECRET`, `ALERT_WEBHOOK_URL`),
 Agenten-Verbindung und Airtable-Automation: [docs/setup-und-nutzung.md](docs/setup-und-nutzung.md)
+
+
+## Konfiguration und Base-Änderungen über den Agenten
+
+| Werkzeug | Zweck |
+|---|---|
+| `hook_test` | Airtable-Hook testen: URL, Header, Beispiel-Body und geplante Aktionen — ohne zu schreiben |
+| `config_get` / `config_set` | Alarm-Webhook, Hook-Secret und Standard-Base setzen; wirkt sofort |
+| `table_create`, `field_create`, `field_update` | Base-Struktur erweitern — standardmäßig als Vorschau, echt nur mit `confirm=true` |
+
+Details: [references/config-and-hooks.md](skills/ilvana-airtable/references/config-and-hooks.md)
