@@ -207,7 +207,7 @@ Antwort:
 
 ## 6. Tageslauf
 
-Registriert und **aktiv (apply)**, täglich 07:00 UTC (08:00 Sarajevo), verwaltbar unter
+Registriert und **aktiv (apply)**, täglich 06:00 UTC = 07:00 Berlin/Sarajevo (Winterzeit; in der Sommerzeit 08:00), verwaltbar unter
 [codewords.agemo.ai/scheduled](https://codewords.agemo.ai/scheduled).
 
 - Vorschau: `POST /automation/daily` mit `{"mode":"preview"}`
