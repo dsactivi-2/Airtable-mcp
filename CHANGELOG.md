@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0 — 2026-10-29
+
+- `service_info`: Version, Werkzeugliste, Änderungsverlauf und Secret-Zuständigkeiten
+- Klar dokumentiert, wer `AIRTABLE_PAT`, `HOOK_SECRET` und `ALERT_WEBHOOK_URL` einträgt
+- Update-Hinweis: Agenten merken sich `version` und laden bei Änderung das Skill neu
+
 ## 1.4.0 — 2026-10-29
 
 - `application_create` — neue Bewerbung anlegen, mit Dubletten-Schutz auf Telefonnummer (409)
