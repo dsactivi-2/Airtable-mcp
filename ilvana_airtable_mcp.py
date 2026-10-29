@@ -516,67 +516,67 @@ class CandidatesSearchInput(BaseModel):
     query: str | None = Field(default=None, description="Freitext: Name, Kundennummer, Passnummer")
     phone: str | None = Field(default=None, description="Handy- oder Festnetznummer, beliebiges Format")
     status: str | None = Field(default=None, description="Status kandidata (exakt)")
-    base: BaseName = Field(default="kopieren")
-    limit: int = Field(default=25, ge=1, le=100)
-    offset: int = Field(default=0, ge=0)
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
+    limit: int = Field(default=25, ge=1, le=100, description="Treffer pro Seite")
+    offset: int = Field(default=0, ge=0, description="Seiten-Offset")
 
 
 class ApplicationsSearchInput(BaseModel):
     query: str | None = Field(default=None, description="Freitext über Name, Telefon, Kundennummer, Passnummer")
     phone: str | None = Field(default=None, description="Telefonnummer in beliebigem Format")
-    status_kandidata: str | None = Field(default=None)
-    casting_grupa: str | None = Field(default=None)
-    casting_ishod: str | None = Field(default=None)
-    ugovor_tok: str | None = Field(default=None)
-    visa_ishod: str | None = Field(default=None)
+    status_kandidata: str | None = Field(default=None, description="Status kandidata exakt, z.B. Casting, Primljeni, Ugovor")
+    casting_grupa: str | None = Field(default=None, description="Casting-Gruppe: UJUTRO oder POPODNE")
+    casting_ishod: str | None = Field(default=None, description="Casting-Ergebnis, z.B. Došao, Prošao praktični")
+    ugovor_tok: str | None = Field(default=None, description="Vertragsstand: Priprema, Poslato kandidatu, Potpisan, Poslato nadležnima")
+    visa_ishod: str | None = Field(default=None, description="Visum-Ergebnis: Dopuna, Dobio vizu, Odbijenica")
     casting_from: str | None = Field(default=None, description="Termin casting ab (YYYY-MM-DD)")
     casting_to: str | None = Field(default=None, description="Termin casting bis (YYYY-MM-DD)")
     action_due_before: str | None = Field(default=None, description="Rok akcije vor (YYYY-MM-DD)")
     only_overdue: bool = Field(default=False, description="Nur überfällige Aktionen")
     only_missing_documents: bool = Field(default=False, description="Nur unvollständige Unterlagen")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
     sort_by: str = Field(default="action_due", description="action_due | name | status | casting_date")
-    sort_dir: Literal["asc", "desc"] = Field(default="asc")
-    limit: int = Field(default=25, ge=1, le=100)
-    offset: int = Field(default=0, ge=0)
+    sort_dir: Literal["asc", "desc"] = Field(default="asc", description="Sortierrichtung")
+    limit: int = Field(default=25, ge=1, le=100, description="Treffer pro Seite")
+    offset: int = Field(default=0, ge=0, description="Seiten-Offset")
 
 
 class CandidateDossierInput(BaseModel):
     record_id: str | None = Field(default=None, description="Airtable-Datensatz-ID (rec…)")
     query: str | None = Field(default=None, description="Alternativ: Name")
     phone: str | None = Field(default=None, description="Alternativ: Telefonnummer")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
 
 
 class ApplicationGetInput(BaseModel):
     record_id: str = Field(..., description="Airtable-Datensatz-ID (rec…)")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
 
 
 class DocumentsListInput(BaseModel):
     record_id: str = Field(..., description="Airtable-Datensatz-ID (rec…)")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
 
 
 class CastingRatingsListInput(BaseModel):
     candidate_record_id: str | None = Field(default=None, description="Nur Bewertungen dieses Kandidaten")
-    base: BaseName = Field(default="kopieren")
-    limit: int = Field(default=50, ge=1, le=100)
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
+    limit: int = Field(default=50, ge=1, le=100, description="Maximale Anzahl")
 
 
 class PipelineSummaryInput(BaseModel):
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
 
 
 class DueReportInput(BaseModel):
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
     days_ahead: int = Field(default=7, ge=1, le=60, description="Termine der nächsten X Tage")
 
 
 class ApplicationUpdateInput(BaseModel):
     record_id: str = Field(..., description="Airtable-Datensatz-ID (rec…)")
     fields: dict[str, Any] = Field(..., description="Zu setzende Felder (nur freigegebene)")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
     note: str | None = Field(default=None, description="Optionaler Protokoll-Eintrag")
 
 
@@ -584,7 +584,7 @@ class BulkUpdateInput(BaseModel):
     fields: dict[str, Any] = Field(..., description="Zu setzende Felder für alle Treffer")
     record_ids: list[str] | None = Field(default=None, description="Explizite Datensatz-IDs")
     filter: dict[str, Any] | None = Field(default=None, description="Filter wie bei applications_search")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
     limit: int = Field(default=50, ge=1, le=50, description="Maximal 50 Datensätze pro Aufruf")
     dry_run: bool = Field(default=True, description="true = nur Vorschau")
     confirm: bool = Field(default=False, description="Muss true sein, damit geschrieben wird")
@@ -592,16 +592,16 @@ class BulkUpdateInput(BaseModel):
 
 class AddNoteInput(BaseModel):
     record_id: str = Field(..., description="Airtable-Datensatz-ID (rec…)")
-    note: str = Field(..., min_length=1, max_length=4000)
-    author: str = Field(default="agent", max_length=80)
-    base: BaseName = Field(default="kopieren")
+    note: str = Field(..., min_length=1, max_length=4000, description="Notiztext")
+    author: str = Field(default="agent", max_length=80, description="Verfasser, erscheint in der Notiz")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
 
 
 class CastingRatingInput(BaseModel):
     fields: dict[str, Any] = Field(default_factory=dict, description="Bewertungsfelder")
     rating_id: str | None = Field(default=None, description="Vorhandene Bewertung aktualisieren")
     candidate_record_id: str | None = Field(default=None, description="Kandidat verknüpfen")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
 
 
 class DocumentUploadInput(BaseModel):
@@ -614,36 +614,36 @@ class DocumentUploadInput(BaseModel):
         json_schema_extra={"contentMediaType": "application/octet-stream"},
     )
     filename: str | None = Field(default=None, description="Dateiname mit Endung; sonst aus der Datei abgeleitet")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
     note: str | None = Field(default=None, description="Optionaler Eintrag in 'Bemerkung zu Dokumenten'")
 
 
 class TasksManageInput(BaseModel):
-    action: Literal["list", "create", "update"] = Field(default="list")
+    action: Literal["list", "create", "update"] = Field(default="list", description="list, create oder update")
     task_id: str | None = Field(default=None, description="rec… für update")
-    name: str | None = Field(default=None)
-    notes: str | None = Field(default=None)
-    status: Literal["Todo", "In progress", "Done"] | None = Field(default=None)
-    base: BaseName = Field(default="kopieren")
-    limit: int = Field(default=25, ge=1, le=100)
+    name: str | None = Field(default=None, description="Aufgabentitel")
+    notes: str | None = Field(default=None, description="Beschreibung der Aufgabe")
+    status: Literal["Todo", "In progress", "Done"] | None = Field(default=None, description="Aufgabenstatus")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
+    limit: int = Field(default=25, ge=1, le=100, description="Treffer pro Seite")
 
 
 class AutomationRulesInput(BaseModel):
-    action: Literal["get", "set"] = Field(default="get")
+    action: Literal["get", "set"] = Field(default="get", description="get = Regeln ansehen, set = Regeln überschreiben")
     rules: list[dict[str, Any]] | None = Field(default=None, description="Regeln (nur bei action=set)")
 
 
 class AutomationRunInput(BaseModel):
-    mode: Literal["preview", "apply"] = Field(default="preview")
-    base: BaseName = Field(default="kopieren")
-    limit: int = Field(default=300, ge=1, le=1000)
+    mode: Literal["preview", "apply"] = Field(default="preview", description="preview = nur zeigen, apply = schreiben")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
+    limit: int = Field(default=300, ge=1, le=1000, description="Maximale Anzahl Datensätze")
     record_ids: list[str] | None = Field(
         default=None, description="Optional nur diese Datensätze prüfen (z.B. für einen Testlauf)"
     )
 
 
 class AutomationLogInput(BaseModel):
-    limit: int = Field(default=25, ge=1, le=200)
+    limit: int = Field(default=25, ge=1, le=200, description="Anzahl Einträge")
 
 
 class RootRequest(BaseModel):
@@ -1331,37 +1331,37 @@ async def tool_automation_log(m: AutomationLogInput) -> dict[str, Any]:
 
 
 class AuditListInput(BaseModel):
-    limit: int = Field(default=50, ge=1, le=500)
+    limit: int = Field(default=50, ge=1, le=500, description="Anzahl Einträge")
     tool: str | None = Field(default=None, description="Nur Einträge dieses Werkzeugs")
     record_id: str | None = Field(default=None, description="Nur Einträge zu diesem Datensatz")
     actor: str | None = Field(default=None, description="Nur Einträge dieses Aufrufers")
 
 
 class ErrorLogInput(BaseModel):
-    limit: int = Field(default=50, ge=1, le=500)
+    limit: int = Field(default=50, ge=1, le=500, description="Anzahl Einträge")
 
 
 class AlertsInput(BaseModel):
-    limit: int = Field(default=50, ge=1, le=500)
+    limit: int = Field(default=50, ge=1, le=500, description="Anzahl Einträge")
 
 
 class DataHealthInput(BaseModel):
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
     notify: bool = Field(default=False, description="true = Auffälligkeiten als Alarm melden")
-    limit: int = Field(default=20, ge=1, le=100)
+    limit: int = Field(default=20, ge=1, le=100, description="Beispiele pro Kategorie")
 
 
 class AirtableHookRequest(BaseModel):
     record_id: str | None = Field(default=None, description="Datensatz, der die Automation ausgelöst hat")
     record_ids: list[str] | None = Field(default=None, description="Mehrere Datensätze")
     mode: Literal["preview", "apply"] = Field(default="apply")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
     event: str | None = Field(default=None, description="Freitext, z.B. Airtable-Automation-Name")
 
 
 class HookTestInput(BaseModel):
     record_id: str | None = Field(default=None, description="Datensatz für den Test (optional)")
-    base: BaseName = Field(default="kopieren")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
 
 
 class ConfigGetInput(BaseModel):
@@ -1378,8 +1378,8 @@ class ConfigSetInput(BaseModel):
 class TableCreateInput(BaseModel):
     name: str = Field(..., min_length=1, max_length=80, description="Name der neuen Tabelle")
     fields: list[dict[str, Any]] = Field(..., description="Felder: [{\"name\": \"Name\", \"type\": \"singleLineText\"}]")
-    description: str | None = Field(default=None)
-    base: BaseName = Field(default="kopieren")
+    description: str | None = Field(default=None, description="Beschreibung der Tabelle")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
     preview: bool = Field(default=True, description="true = nur zeigen, was gesendet würde")
     confirm: bool = Field(default=False, description="Muss true sein, damit die Tabelle entsteht")
 
@@ -1389,9 +1389,9 @@ class FieldCreateInput(BaseModel):
     name: str = Field(..., min_length=1, max_length=80, description="Feldname")
     type: str = Field(..., description="Airtable-Feldtyp, z.B. singleLineText, singleSelect, date, number")
     options: dict[str, Any] | None = Field(default=None, description="Optionen, z.B. choices für singleSelect")
-    base: BaseName = Field(default="kopieren")
-    preview: bool = Field(default=True)
-    confirm: bool = Field(default=False)
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
+    preview: bool = Field(default=True, description="true = nur zeigen, was gesendet würde")
+    confirm: bool = Field(default=False, description="Muss true sein, damit wirklich geschrieben wird")
 
 
 class FieldUpdateInput(BaseModel):
@@ -1399,9 +1399,9 @@ class FieldUpdateInput(BaseModel):
     field_id: str = Field(..., description="Feld-ID fld…")
     name: str | None = Field(default=None, description="Neuer Name")
     options: dict[str, Any] | None = Field(default=None, description="Neue Optionen (z.B. choices)")
-    base: BaseName = Field(default="kopieren")
-    preview: bool = Field(default=True)
-    confirm: bool = Field(default=False)
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
+    preview: bool = Field(default=True, description="true = nur zeigen, was gesendet würde")
+    confirm: bool = Field(default=False, description="Muss true sein, damit wirklich geschrieben wird")
 
 
 
@@ -2287,6 +2287,15 @@ def create_fastapi_app() -> FastAPI:
         except Exception:  # noqa: BLE001
             body = {}
         payload = AirtableHookRequest(**body) if isinstance(body, dict) else AirtableHookRequest()
+        if payload.mode == "apply" and not secret:
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "success": False,
+                    "error": "HOOK_SECRET ist nicht gesetzt — 'apply' ist gesperrt. "
+                    "Setze ein Secret über config_set oder nutze mode=preview.",
+                },
+            )
         ids = payload.record_ids or ([payload.record_id] if payload.record_id else None)
         token = _ACTOR.set("airtable-automation")
         try:
