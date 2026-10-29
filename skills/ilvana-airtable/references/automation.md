@@ -50,3 +50,21 @@ Regel-Felder: `id`, `kind` (`status` oder `appointment`), `status` bzw. `field` 
 - Die Automatik ersetzt **keine** Zustellung. E-Mail, Viber, Facebook Messenger und SMS verschickt die
   eigene Plattform; der Dienst liefert `report_text` und die Aktionsliste.
 - Kein Löschen, kein Rückgängigmachen. Änderungen werden nur durch erneutes Setzen korrigiert.
+
+
+## Protokoll, Fehler und Alarme
+
+| Werkzeug | Inhalt |
+|---|---|
+| `audit_list` | wer wann was: Werkzeug, Aufrufer, Datensatz, Felder, Dauer |
+| `error_log` | fehlgeschlagene Aufrufe mit Ursache und Status |
+| `alerts_list` | gespeicherte Alarme, zeigt ob ein Alarm-Webhook konfiguriert ist |
+| `data_health` | Lücken und Fehler: ohne Status, ohne nächste Aktion, überfällig, fehlende Unterlagen, verpasste Termine, doppelte Nummern |
+
+Aufrufer: Header `X-Actor` oder `X-Client`; ohne Header die Aufrufer-ID der Plattform.
+Alarme werden immer gespeichert. Erst `ALERT_WEBHOOK_URL` macht daraus eine Push-Meldung.
+
+## Anbindung an Airtable Automation
+
+`POST /hooks/airtable` mit `{"record_id": "rec...", "mode": "apply", "event": "..."}`.
+Mit `HOOK_SECRET` ist der Header `X-Hook-Secret` Pflicht. `mode=preview` schreibt nichts — gut zum Testen.
