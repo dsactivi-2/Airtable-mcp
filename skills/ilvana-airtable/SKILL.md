@@ -1,6 +1,6 @@
 ---
 name: ilvana-airtable
-description: Kandidaten-CRM der Ilvana i Hase in Airtable — lesen, suchen, filtern, schreiben, Dokumente hochladen, Automatik steuern, konfigurieren und die Base-Struktur erweitern. 28 Werkzeuge über MCP oder JSON-HTTP.
+description: Kandidaten-CRM der Ilvana i Hase in Airtable — lesen, suchen, filtern, schreiben, Dokumente hochladen, Automatik steuern, konfigurieren und die Base-Struktur erweitern. 29 Werkzeuge über MCP oder JSON-HTTP.
 ---
 
 # Ilvana Airtable — Kern-Skill
@@ -40,8 +40,8 @@ Der Airtable-Schlüssel liegt im Dienst — kein Agent braucht ihn.
 **Lesen (9)** — `schema_get`, `candidates_search`, `applications_search`, `candidate_dossier`,
 `application_get`, `documents_list`, `casting_ratings_list`, `pipeline_summary`, `due_report`
 
-**Schreiben (6)** — `application_update`, `applications_bulk_update`, `application_add_note`,
-`casting_rating_upsert`, `document_upload`, `tasks_manage`
+**Schreiben (7)** — `application_update`, `applications_bulk_update`, `application_add_note`,
+`application_create`, `casting_rating_upsert`, `document_upload`, `tasks_manage`
 
 **Automatik (3)** — `automation_rules`, `automation_run`, `automation_log`
 
@@ -56,7 +56,8 @@ Der Airtable-Schlüssel liegt im Dienst — kein Agent braucht ihn.
 POST /tools/candidates_search   {"query": "Mihaljevic", "phone": "+387 61 614 368"}
 POST /tools/candidate_dossier    {"record_id": "recuQxflPVccPo9xT"}
 POST /tools/applications_search  {"status_kandidata": "Casting", "only_overdue": true}
-POST /tools/application_update   {"record_id": "rec…", "fields": {"Status kandidata": "Primljeni"}, "note": "bestanden"}
+POST /tools/application_update   {"record_id": "rec…", "fields": {"Status kandidata": "Primljeni"}}
+POST /tools/application_create   {"fields": {"Ime i prezime": "…", "Broj telefona": "…"}}
 ```
 
 ## Was der Agent selbst konfigurieren darf
@@ -77,6 +78,7 @@ POST /tools/application_update   {"record_id": "rec…", "fields": {"Status kand
 | Tags, Stufen, automatische Felder | `references/tags.md` |
 | Automatik und Tageslauf | `references/automation.md` |
 | Konfiguration, Hook-Test, Base-Änderungen | `references/config-and-hooks.md` |
+| Anlegen, Ändern, Uploads, Dubletten-Regel | `references/writing.md` |
 | Verbesserungsvorschläge | `references/good-to-have.md` |
 
 ## Antwortstil
