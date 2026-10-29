@@ -116,3 +116,9 @@ Agenten-Verbindung und Airtable-Automation: [docs/setup-und-nutzung.md](docs/set
 | `table_create`, `field_create`, `field_update` | Base-Struktur erweitern — standardmäßig als Vorschau, echt nur mit `confirm=true` |
 
 Details: [references/config-and-hooks.md](skills/ilvana-airtable/references/config-and-hooks.md)
+
+
+## Für Kollegen im Büro
+
+- Korisničko uputstvo (bosanski): [docs/nutzeranleitung-bs.md](docs/nutzeranleitung-bs.md)
+- Prompt za AI video uputstvo: [docs/video-prompt.md](docs/video-prompt.md)
