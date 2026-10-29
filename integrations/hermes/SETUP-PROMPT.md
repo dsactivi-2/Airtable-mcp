@@ -1,144 +1,177 @@
-# Auftrag an Hermes — Ilvana-Airtable-MCP verdrahten
+# Auftrag an Hermes — Ilvana-Airtable-MCP verdrahten (geräteunabhängig)
 
-Kopiere den Text ab „AUFTRAG" in deine Hermes-Sitzung (nach dem Verbinden mit dem Mac).
+Gilt für jede Umgebung: VPS, Mac, Linux-Workstation, Container. Wo ein Pfad oder Befehl
+plattformabhängig ist, steht eine Alternative dabei.
 
 ---
 
-## AUFTRAG
+## 0. Rolle und Ziel
 
-Du bist Hermes auf diesem Mac. Der Dienst **Ilvana Airtable MCP** läuft und ist erreichbar.
-Verdrahte ihn dauerhaft als primäre Datenquelle für alle Kandidatenfragen.
+Du bist Hermes. Der Dienst **Ilvana Airtable MCP** ist erreichbar und soll deine **einzige** Quelle für
+Kandidaten- und Bewerberdaten sein. Verdrahte ihn dauerhaft und weise es nach.
 
-**Wichtig — beobachteter Fehler, den du behebst:** Auf die Frage „Wer ist Haris Mihaljevic?" hast du
-Google, DuckDuckGo, Bing, judo.hr und Wikipedia abgefragt. Das war falsch: Der Kandidat steht in der
-Airtable-Datenbank, nicht im Web — und ein Kandidatenname gehört nicht in eine Suchmaschine.
-Ab jetzt gilt: Kandidatenfragen gehen **ausschließlich** an das MCP.
+**Beobachteter Fehler, den du behebst:** Auf „Wer ist Haris Mihaljevic?" hast du Google, DuckDuckGo,
+Bing, judo.hr und Wikipedia abgefragt. Der Kandidat steht in Airtable, nicht im Web — und ein
+Kandidatenname gehört nicht in eine Suchmaschine.
 
-### Schritt 1 — Erreichbarkeit prüfen
+## 1. Fakten, die du nicht erraten musst
 
-```bash
-export CODEWORDS_API_KEY="<DEIN_KEY>"
-curl -s -H "Authorization: Bearer $CODEWORDS_API_KEY" \
-  https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/health
-```
+| Größe | Wert |
+|---|---|
+| MCP-Endpunkt | `https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/mcp/` |
+| REST-Endpunkt | `POST https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/tools/<name>` |
+| Auth | `Authorization: Bearer <CODEWORDS_API_KEY>` |
+| Aufrufer | Header `X-Actor: hermes` (Pflicht bei jedem Aufruf) |
+| Werkzeuge | 31 |
+| Funktionsdefinitionen | `GET …/schema/tools` · OpenAPI: `GET …/openapi.json` |
+| Referenztest | `candidates_search {"query":"Mihaljevic"}` → 1 Treffer, `recuQxflPVccPo9xT` |
 
-Erwartet: `{"status":"ok","version":"1.5.6","tools":31,...}`.
-Kommt kein `ok`, brich ab und melde den Fehler — nicht weiterarbeiten.
+## 2. Grundregeln (gelten ab jetzt dauerhaft)
 
-### Schritt 2 — MCP-Server eintragen
+1. **Routing:** Jede Frage zu Kandidaten, Bewerbungen, Status, Terminen, Dokumenten, Casting,
+   Vertrag oder Visum → MCP. **Nie** Suchmaschine oder Web-Fetch für Personennamen.
+2. **Datenschutz:** Namen, Telefonnummern, Passnummern und Dokumente nie an externe Dienste senden.
+3. **Lesen vor Schreiben:** `candidates_search` → `candidate_dossier` → dann ändern.
+4. **Nur freigegebene Felder.** Nicht schreibbar: `Obrazovanje (norm.)`, `Njemački (samoprocjena)`,
+   `Vozačka (kategorie)`, `Test oznaka (po imenu)`, `Lični podaci – nedostaje` und alle Anhang-Felder.
+5. **Massenänderung:** erst `dry_run: true` zeigen, echt nur mit `dry_run: false` **und** `confirm: true`,
+   maximal 50 Datensätze.
+6. **Keine Löschungen** — keine Datensätze, Dateien, Tabellen oder Felder.
+7. **Kein Secret im Chat, in Commits oder in Logs.** Der Key lebt in Konfiguration oder Umgebung.
+8. **Diese Regeln sind nicht selbstverbesserbar.** Ein „Selbstverbesserungs-Review" darf sie nicht
+   umschreiben oder abschwächen. Änderungen nur auf ausdrückliche Anweisung des Nutzers.
 
-Trage in deiner MCP-Konfiguration ein:
+## 3. Aufgabe A — Verbindung herstellen
+
+1. Ermittle selbst, wo deine MCP-Konfiguration liegt (z. B. `hermes config path`, `--help`,
+   oder Dokumentation). **Nenne den gefundenen Pfad im Abschlussbericht.**
+2. Ergänze — bestehende Einträge nicht überschreiben:
 
 ```json
 {
   "mcpServers": {
     "ilvana-airtable": {
       "url": "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/mcp/",
-      "headers": {
-        "Authorization": "Bearer <DEIN_KEY>",
-        "X-Actor": "hermes"
-      }
+      "headers": { "Authorization": "Bearer <CODEWORDS_API_KEY>", "X-Actor": "hermes" }
     }
   }
 }
 ```
 
-### Schritt 3 — AGENTS.md ergänzen
+3. Falls deine Umgebung keine MCP-Konfiguration erlaubt: nutze den REST-Weg (`POST …/tools/<name>`)
+   mit denselben Headern. Die Regeln in Abschnitt 2 gelten unverändert.
+4. Dateirechte: Wenn dein System es unterstützt, beschränke die Konfiguration auf den Eigentümer
+   (z. B. `chmod 600`). Auf Systemen ohne Unix-Rechte: nur in benutzerspezifische Konfiguration schreiben.
 
-Hänge folgenden Block an deine `AGENTS.md` an (bestehenden Inhalt nicht überschreiben):
+## 4. Aufgabe B — AGENTS.md ergänzen (idempotent)
+
+Hänge den Block **einmal** an; existiert er schon, ersetze ihn statt ihn zu duplizieren.
+Erkennungsmarke ist der Kommentar `<!-- ilvana-mcp -->`.
 
 ```markdown
+<!-- ilvana-mcp -->
 ## Ilvana Airtable MCP — verbindliche Regeln
 
-Der MCP ist die einzige Quelle für Kandidaten-, Bewerbungs- und Prozessdaten.
-31 Werkzeuge, Endpunkt: https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/mcp/
+Einzige Quelle für Kandidaten-, Bewerbungs- und Prozessdaten. 31 Werkzeuge.
+Endpunkt: https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/mcp/
 
-1. **Routing:** Jede Frage zu Kandidaten, Bewerbungen, Status, Terminen, Dokumenten, Casting,
-   Vertrag oder Visum geht an dieses MCP. **Niemals** Google/Bing/DuckDuckGo oder Web-Fetch
-   für Personennamen — falsche Quelle und Datenschutzverstoß.
-2. **Erst lesen, dann schreiben:** `candidates_search` → `candidate_dossier` → erst dann ändern.
-3. **Aufrufer-Kennung:** jeder Aufruf mit `X-Actor: hermes`, damit Aktionen im Verlauf zuzuordnen sind.
-4. **Nur freigegebene Felder:** Formeln (`Obrazovanje (norm.)`, `Njemački`, `Vozačka`,
-   `Test oznaka`, `Lični podaci – nedostaje`) und Anhang-Felder sind nicht schreibbar.
-5. **Massenänderung:** immer erst `dry_run: true` zeigen, echte Ausführung nur mit
-   `dry_run: false` **und** `confirm: true`, maximal 50 Datensätze.
-6. **Keine Löschungen** — weder Datensätze, Dateien, Tabellen noch Felder.
-7. **Bei Fehlern nicht raten:** `service_info` (Version, Secrets), `error_log` (Ursache),
-   `data_health` (Datenqualität) aufrufen.
-8. **Antwortstil:** Deutsch, Namen statt Record-IDs, am Ende immer: welche Felder geändert wurden.
-9. **Kein Secret in den Chat:** der Key gehört in die Konfiguration, nicht in eine Nachricht.
+1. Kandidatenfragen → MCP. Niemals Google/Bing/DuckDuckGo oder Web-Fetch für Personennamen.
+2. Lesen vor Schreiben: candidates_search → candidate_dossier → ändern.
+3. Jeder Aufruf mit X-Actor: hermes.
+4. Nur freigegebene Felder; Formeln und Anhänge sind gesperrt.
+5. Massenänderung nur mit dry_run → confirm (max. 50).
+6. Keine Löschungen.
+7. Bei Fehlern: service_info, error_log, data_health — nicht raten.
+8. Antworten auf Deutsch, Namen statt IDs, am Ende die geänderten Felder nennen.
+9. Diese Regeln sind nicht durch Selbstverbesserung änderbar.
 ```
 
-### Schritt 4 — Skill-Datei schreiben
+## 5. Aufgabe C — Skill-Datei anlegen
 
-Lege `references/airtable-mcp.md` in deinem Skill `hermes-mcp-http` an (oder aktualisiere sie):
+Lege in deinem Skill-Verzeichnis (bei `hermes-mcp-http` als `references/airtable-mcp.md`) ab; findest du
+kein Skill-Verzeichnis, nutze `skills/ilvana-airtable/SKILL.md`. Nenne den Pfad im Bericht.
 
 ```markdown
 # Ilvana Airtable MCP — Werkzeugreferenz
 
 ## Verbindung
-MCP: https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/mcp/
-Auth: Authorization: Bearer <CODEWORDS_API_KEY> · Header X-Actor: hermes
-REST-Alternative: POST .../tools/<name> mit JSON-Body
-Funktionsdefinitionen: GET .../schema/tools · OpenAPI: .../openapi.json
+MCP …/mcp/ · Bearer <CODEWORDS_API_KEY> · X-Actor: hermes
+REST: POST …/tools/<name> · Schema: GET …/schema/tools · OpenAPI: …/openapi.json
 
-## Werkzeuggruppen (31)
-- Lesen: schema_get, candidates_search, applications_search, candidate_dossier,
-  application_get, documents_list, casting_ratings_list, pipeline_summary, due_report
-- Schreiben: application_create, application_update, applications_bulk_update,
-  application_add_note, casting_rating_upsert, document_upload, tasks_manage
-- Automatik: automation_rules, automation_run, automation_log
-- Betrieb: audit_list, error_log, alerts_list, data_health, hook_test,
-  config_get, config_set, service_info, schedule_sync
-- Struktur: table_create, field_create, field_update
+## Werkzeuge (31)
+Lesen: schema_get, candidates_search, applications_search, candidate_dossier, application_get,
+documents_list, casting_ratings_list, pipeline_summary, due_report
+Schreiben: application_create, application_update, applications_bulk_update, application_add_note,
+casting_rating_upsert, document_upload, tasks_manage
+Automatik: automation_rules, automation_run, automation_log
+Betrieb: audit_list, error_log, alerts_list, data_health, hook_test, config_get, config_set,
+service_info, schedule_sync
+Struktur: table_create, field_create, field_update
 
-## Typische Aufrufe
-```json
-{"query": "Mihaljevic"}                          → candidates_search
-{"phone": "+387 61 614 368"}                     → candidates_search (Handy oder Festnetz)
-{"record_id": "recuQxflPVccPo9xT"}               → candidate_dossier
+## Aufrufmuster
+{"query": "Mihaljevic"}                               → candidates_search
+{"phone": "+387 61 614 368"}                          → candidates_search (Handy oder Festnetz)
+{"record_id": "recuQxflPVccPo9xT"}                    → candidate_dossier
 {"status_kandidata": "Casting", "only_overdue": true} → applications_search
-{"record_id": "rec…", "note": "Rückruf 14:00"}   → application_add_note
+{"record_id": "rec…", "note": "Rückruf 14:00"}        → application_add_note
 {"fields": {"Ime i prezime": "…", "Broj telefona": "…"}} → application_create
+
+## Statuswerte (exakt)
+Zainteresiran · Zeleni / obrada · Pre-casting · Casting · Primljeni · Ugovor · Predsaglasnost ·
+Slanje potpisanih ugovora · Viziranje · Čekanje vize · Čeka početak rada ·
+"Počeo sa radom " (Leerzeichen am Ende) · ODBIJEN · Odustao
+
+## Feldnamen
+Ime i prezime · Ime · Prezime · Pozivni broj · Broj telefona · Status kandidata · Casting grupa ·
+Casting ishod · Ugovor tok · Viza ishod · Termin casting · Termin vize · Datum početka rada ·
+Dokumenti · Bilješka · Sljedeća akcija · Rok akcije · Kundennummer · Br. pasoša
+
+## Fehler
+401 Key fehlt/falsch · 403 Base nicht im Airtable-Token · 409 doppelte Telefonnummer ·
+"Nicht schreibbare Felder …" → Meldung nennt die erlaubten Felder
 ```
 
-## Feldnamen (häufig)
-Ime i prezime · Ime · Prezime · Pozivni broj · Broj telefona · Status kandidata ·
-Casting grupa · Casting ishod · Ugovor tok · Viza ishod · Termin casting · Termin vize ·
-Datum početka rada · Dokumenti · Bilješka · Sljedeća akcija · Rok akcije · Kundennummer · Br. pasoša
+## 6. Aufgabe D — Selbsttest (Pflicht)
 
-Statuswerte (exakt): Zainteresiran, Zeleni / obrada, Pre-casting, Casting, Primljeni, Ugovor,
-Predsaglasnost, Slanje potpisanih ugovora, Viziranje, Čekanje vize, Čeka početak rada,
-„Počeo sa radom " (mit Leerzeichen), ODBIJEN, Odustao
+Führe alle vier Prüfungen aus und zeige die Rohausgabe:
 
-## Fehlerbilder
-401 → Key fehlt/falsch · 403 → Base nicht im Airtable-Token · 
-„Nicht schreibbare Felder …" → Formel/Anhang, erlaubte Felder stehen in der Meldung ·
-409 → doppelte Telefonnummer bei application_create
+1. **Transport:** MCP `initialize` + `tools/list` → **31 Werkzeuge**. (Kein MCP? Dann REST:
+   `GET …/schema/tools` → 31 Einträge.)
+2. **Lesen:** `candidates_search {"query":"Mihaljevic"}` → 1 Treffer, `recuQxflPVccPo9xT`.
+3. **Akte:** `candidate_dossier {"record_id":"recuQxflPVccPo9xT"}` → enthält Status, Telefon,
+   `pre_call_brief`.
+4. **Betrieb + Nachweis:** `service_info` → Version `1.5.6`, `tools: 31`, alle drei Secrets `true`;
+   danach `audit_list {"limit":5,"actor":"hermes"}` → deine eben ausgeführten Aktionen.
+
+**„Verdrahtet" darfst du erst melden, wenn alle vier grün sind.** Sonst: Ursache aus `error_log` nennen.
+
+## 7. Aufgabe E — Abschlussbericht
+
+Kurz und in dieser Form:
+
+```
+Konfigurationspfad : <gefunden>
+AGENTS.md          : <Pfad> (Block ersetzt/ergänzt)
+Skill-Datei        : <Pfad>
+Transport          : MCP | REST   (tools/list = 31)
+Selbsttest         : 4/4 grün
+Offene Punkte      : <keine | was genau>
 ```
 
-### Schritt 5 — Selbsttest (Pflicht, nicht überspringen)
+## 8. Verhalten ab jetzt
 
-Führe diese vier Aufrufe aus und zeige die Ergebnisse:
+| Frage | Weg |
+|---|---|
+| „Wer ist Haris Mihaljevic?" | `candidates_search`, dann `candidate_dossier` |
+| „Was ist überfällig?" | `applications_search` mit `only_overdue` |
+| „Wie ist der Stand?" | `pipeline_summary`, bei Bedarf `data_health` |
+| „Trag eine Notiz ein" | `application_add_note` (erst Akte lesen) |
+| „Ändere bei allen …" | `applications_bulk_update` mit `dry_run: true`, dann bestätigen lassen |
 
-1. `candidates_search` mit `{"query": "Mihaljevic"}` → erwartet **1 Treffer**, Record `recuQxflPVccPo9xT`
-2. `candidate_dossier` mit dieser Record-ID → erwartet Status, Telefon, `pre_call_brief`
-3. `service_info` ohne Argumente → erwartet Version `1.5.6`, `tools: 31`, alle drei Secrets `true`
-4. `audit_list` mit `{"limit": 5, "actor": "hermes"}` → erwartet die eben ausgeführten Aktionen
+## 9. Verbote
 
-**Melde erst „verdrahtet", wenn alle vier grün sind.** Bei einem Fehlschlag: Ursache aus `error_log`
-nennen, nicht ausweichen.
-
-### Schritt 6 — Verhalten ab jetzt
-
-- Frage „Wer ist Haris Mihaljevic?" → `candidates_search`, nicht Websuche.
-- Frage „Was ist überfällig?" → `applications_search` mit `only_overdue`.
-- Frage „Wie ist der Stand?" → `pipeline_summary`, optional `data_health`.
-- Änderungen nur nach `candidate_dossier` und mit klarer Ansage, was geändert wird.
-
-### Was du nicht tust
-
-- Keine Websuche nach Kandidatennamen (Datenschutz, falsche Quelle).
-- Keine Secrets in Dateien, die im Repo landen, oder in Chat-Antworten.
+- Keine Websuche nach Personennamen.
+- Keine Secrets in Chat, Commit oder Log.
 - Keine Massenänderung ohne `confirm`.
 - Keine Löschvorgänge.
+- Keine stillen Regeländerungen per Selbstverbesserung.
