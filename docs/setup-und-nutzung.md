@@ -133,6 +133,17 @@ Konfiguration, nie in den Prompt.
 
 ---
 
+## 3b. Öffentliche Spec-URL für ChatGPT und Grok
+
+Actions-Importer laden die Spec selbst — dafür muss sie ohne Anmeldung erreichbar sein:
+
+```
+https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@main/openapi/ilvana-airtable.openapi.json
+```
+
+Unveränderlich (Tag): `https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@v1.5.3/openapi/ilvana-airtable.openapi.json` · Fallback: `https://raw.githubusercontent.com/dsactivi-2/Airtable-mcp/main/openapi/ilvana-airtable.openapi.json`.
+Die Dienst-URL (`https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/openapi.json`) verlangt einen Bearer-Key und ist für den Import nicht geeignet.
+
 ## 4. Erste Aufrufe
 
 ```jsonc
