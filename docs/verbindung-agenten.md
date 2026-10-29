@@ -65,7 +65,7 @@ curl -X POST "$ILVANA_AIRTABLE_URL/tools/candidates_search" \
 ChatGPT spricht kein MCP. Nutze eine **Action**:
 
 1. GPT erstellen → *Configure* → *Actions* → *Create new action*
-2. **Schema importieren:** URL `https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/openapi.json` angeben (oder Inhalt von `openapi/ilvana-airtable.openapi.json` einfügen)
+2. **Schema importieren:** URL `https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@main/openapi/ilvana-airtable.openapi.json` angeben (oder Inhalt von `openapi/ilvana-airtable.openapi.json` einfügen)
 3. **Authentication:** *API Key* → Auth Type **Bearer** → Key = CodeWords API Key
 4. **Instructions:** Inhalt von `skills/ilvana-airtable/SKILL.md` einfügen (die Referenzdateien als
    Wissensdateien hochladen)
