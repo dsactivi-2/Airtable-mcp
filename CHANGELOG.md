@@ -2,6 +2,8 @@
 
 ## 1.5.3 — 2026-10-29
 
+- Öffentliche Spec-URL dokumentiert (jsDelivr `@main`, Tag `v1.5.3`) für den Actions-Import
+
 - `GET /openapi.json` liefert die vollständige Werkzeug-Spec (30 Operationen + `/health`),
   direkt importierbar bei ChatGPT-Actions und Grok
 
