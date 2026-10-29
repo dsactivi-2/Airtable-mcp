@@ -1,0 +1,1243 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ilvana Airtable MCP",
+    "version": "1.0.0",
+    "description": "Kandidaten-CRM der Ilvana i Hase: Suche, Kandidatenakte, Schreiben, Dokument-Uploads, Automatik. Alle Aufrufe sind reines JSON."
+  },
+  "servers": [
+    {
+      "url": "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "CodeWords API Key"
+      }
+    },
+    "schemas": {}
+  },
+  "paths": {
+    "/tools/schema_get": {
+      "post": {
+        "operationId": "schema_get",
+        "summary": "Tabellen, Felder, Typen und erlaubte Auswahlwerte einer Base (kopieren|original).",
+        "description": "Tabellen, Felder, Typen und erlaubte Auswahlwerte einer Base (kopieren|original).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "base": {
+                    "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "include_choices": {
+                    "default": true,
+                    "description": "Auswahlwerte mitliefern",
+                    "title": "Include Choices",
+                    "type": "boolean"
+                  },
+                  "refresh": {
+                    "default": false,
+                    "description": "Schema neu von Airtable laden",
+                    "title": "Refresh",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/candidates_search": {
+      "post": {
+        "operationId": "candidates_search",
+        "summary": "Kandidaten suchen über Name, Telefon (Handy oder Festnetz), Kundennummer oder Passnummer.",
+        "description": "Kandidaten suchen über Name, Telefon (Handy oder Festnetz), Kundennummer oder Passnummer.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "query": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Freitext: Name, Kundennummer, Passnummer",
+                    "title": "Query"
+                  },
+                  "phone": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Handy- oder Festnetznummer, beliebiges Format",
+                    "title": "Phone"
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Status kandidata (exakt)",
+                    "title": "Status"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "default": 25,
+                    "maximum": 100,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  },
+                  "offset": {
+                    "default": 0,
+                    "minimum": 0,
+                    "title": "Offset",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/applications_search": {
+      "post": {
+        "operationId": "applications_search",
+        "summary": "Bewerbungen filtern nach Status, Casting-Gruppe/-Ausgang, Vertrag, Visum, Zeiträumen, überfälligen Aktionen und fehlende",
+        "description": "Bewerbungen filtern nach Status, Casting-Gruppe/-Ausgang, Vertrag, Visum, Zeiträumen, überfälligen Aktionen und fehlenden Unterlagen.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "query": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Freitext über Name, Telefon, Kundennummer, Passnummer",
+                    "title": "Query"
+                  },
+                  "phone": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Telefonnummer in beliebigem Format",
+                    "title": "Phone"
+                  },
+                  "status_kandidata": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Status Kandidata"
+                  },
+                  "casting_grupa": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Casting Grupa"
+                  },
+                  "casting_ishod": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Casting Ishod"
+                  },
+                  "ugovor_tok": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Ugovor Tok"
+                  },
+                  "visa_ishod": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Visa Ishod"
+                  },
+                  "casting_from": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Termin casting ab (YYYY-MM-DD)",
+                    "title": "Casting From"
+                  },
+                  "casting_to": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Termin casting bis (YYYY-MM-DD)",
+                    "title": "Casting To"
+                  },
+                  "action_due_before": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Rok akcije vor (YYYY-MM-DD)",
+                    "title": "Action Due Before"
+                  },
+                  "only_overdue": {
+                    "default": false,
+                    "description": "Nur überfällige Aktionen",
+                    "title": "Only Overdue",
+                    "type": "boolean"
+                  },
+                  "only_missing_documents": {
+                    "default": false,
+                    "description": "Nur unvollständige Unterlagen",
+                    "title": "Only Missing Documents",
+                    "type": "boolean"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "sort_by": {
+                    "default": "action_due",
+                    "description": "action_due | name | status | casting_date",
+                    "title": "Sort By",
+                    "type": "string"
+                  },
+                  "sort_dir": {
+                    "default": "asc",
+                    "enum": [
+                      "asc",
+                      "desc"
+                    ],
+                    "title": "Sort Dir",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "default": 25,
+                    "maximum": 100,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  },
+                  "offset": {
+                    "default": 0,
+                    "minimum": 0,
+                    "title": "Offset",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/candidate_dossier": {
+      "post": {
+        "operationId": "candidate_dossier",
+        "summary": "Komplette Kandidatenakte als ein JSON: Stammdaten, Prozess, Termine, Dokumente, Bewertungen, Aufgaben, Vorab-Text für ei",
+        "description": "Komplette Kandidatenakte als ein JSON: Stammdaten, Prozess, Termine, Dokumente, Bewertungen, Aufgaben, Vorab-Text für einen Anruf.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "record_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Airtable-Datensatz-ID (rec…)",
+                    "title": "Record Id"
+                  },
+                  "query": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Alternativ: Name",
+                    "title": "Query"
+                  },
+                  "phone": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Alternativ: Telefonnummer",
+                    "title": "Phone"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/application_get": {
+      "post": {
+        "operationId": "application_get",
+        "summary": "Eine Bewerbung mit allen Feldern und Dokumenten.",
+        "description": "Eine Bewerbung mit allen Feldern und Dokumenten.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "record_id": {
+                    "description": "Airtable-Datensatz-ID (rec…)",
+                    "title": "Record Id",
+                    "type": "string"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "record_id"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/documents_list": {
+      "post": {
+        "operationId": "documents_list",
+        "summary": "Hinterlegte Dateien eines Kandidaten mit Name, Typ, Größe und Link.",
+        "description": "Hinterlegte Dateien eines Kandidaten mit Name, Typ, Größe und Link.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "record_id": {
+                    "description": "Airtable-Datensatz-ID (rec…)",
+                    "title": "Record Id",
+                    "type": "string"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "record_id"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/casting_ratings_list": {
+      "post": {
+        "operationId": "casting_ratings_list",
+        "summary": "Casting-Bewertungen, optional nur für einen Kandidaten.",
+        "description": "Casting-Bewertungen, optional nur für einen Kandidaten.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "candidate_record_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Nur Bewertungen dieses Kandidaten",
+                    "title": "Candidate Record Id"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "default": 50,
+                    "maximum": 100,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/pipeline_summary": {
+      "post": {
+        "operationId": "pipeline_summary",
+        "summary": "Übersicht: Anzahl je Status, überfällige Aktionen, fehlende Unterlagen, Termine der nächsten 7 Tage.",
+        "description": "Übersicht: Anzahl je Status, überfällige Aktionen, fehlende Unterlagen, Termine der nächsten 7 Tage.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/due_report": {
+      "post": {
+        "operationId": "due_report",
+        "summary": "Tagesbericht: fällige und überfällige Aktionen, Casting- und Visumtermine, fehlende Unterlagen.",
+        "description": "Tagesbericht: fällige und überfällige Aktionen, Casting- und Visumtermine, fehlende Unterlagen.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "days_ahead": {
+                    "default": 7,
+                    "description": "Termine der nächsten X Tage",
+                    "maximum": 60,
+                    "minimum": 1,
+                    "title": "Days Ahead",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/application_update": {
+      "post": {
+        "operationId": "application_update",
+        "summary": "Freigegebene Felder einer Bewerbung setzen; optional mit Protokoll-Notiz.",
+        "description": "Freigegebene Felder einer Bewerbung setzen; optional mit Protokoll-Notiz.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "record_id": {
+                    "description": "Airtable-Datensatz-ID (rec…)",
+                    "title": "Record Id",
+                    "type": "string"
+                  },
+                  "fields": {
+                    "additionalProperties": true,
+                    "description": "Zu setzende Felder (nur freigegebene)",
+                    "title": "Fields",
+                    "type": "object"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "note": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optionaler Protokoll-Eintrag",
+                    "title": "Note"
+                  }
+                },
+                "required": [
+                  "record_id",
+                  "fields"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/applications_bulk_update": {
+      "post": {
+        "operationId": "applications_bulk_update",
+        "summary": "Mehrere Kandidaten gleichzeitig ändern — standardmäßig nur Vorschau, Schreiben erst mit dry_run=false und confirm=true, ",
+        "description": "Mehrere Kandidaten gleichzeitig ändern — standardmäßig nur Vorschau, Schreiben erst mit dry_run=false und confirm=true, maximal 50 Datensätze.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "fields": {
+                    "additionalProperties": true,
+                    "description": "Zu setzende Felder für alle Treffer",
+                    "title": "Fields",
+                    "type": "object"
+                  },
+                  "record_ids": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Explizite Datensatz-IDs",
+                    "title": "Record Ids"
+                  },
+                  "filter": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Filter wie bei applications_search",
+                    "title": "Filter"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "default": 50,
+                    "description": "Maximal 50 Datensätze pro Aufruf",
+                    "maximum": 50,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  },
+                  "dry_run": {
+                    "default": true,
+                    "description": "true = nur Vorschau",
+                    "title": "Dry Run",
+                    "type": "boolean"
+                  },
+                  "confirm": {
+                    "default": false,
+                    "description": "Muss true sein, damit geschrieben wird",
+                    "title": "Confirm",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "fields"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/application_add_note": {
+      "post": {
+        "operationId": "application_add_note",
+        "summary": "Notiz mit Zeitstempel und Verfasser anhängen (bestehende Notizen bleiben erhalten).",
+        "description": "Notiz mit Zeitstempel und Verfasser anhängen (bestehende Notizen bleiben erhalten).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "record_id": {
+                    "description": "Airtable-Datensatz-ID (rec…)",
+                    "title": "Record Id",
+                    "type": "string"
+                  },
+                  "note": {
+                    "maxLength": 4000,
+                    "minLength": 1,
+                    "title": "Note",
+                    "type": "string"
+                  },
+                  "author": {
+                    "default": "agent",
+                    "maxLength": 80,
+                    "title": "Author",
+                    "type": "string"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "record_id",
+                  "note"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/casting_rating_upsert": {
+      "post": {
+        "operationId": "casting_rating_upsert",
+        "summary": "Casting-Bewertung anlegen oder aktualisieren, inklusive Verknüpfung zum Kandidaten.",
+        "description": "Casting-Bewertung anlegen oder aktualisieren, inklusive Verknüpfung zum Kandidaten.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "fields": {
+                    "additionalProperties": true,
+                    "description": "Bewertungsfelder",
+                    "title": "Fields",
+                    "type": "object"
+                  },
+                  "rating_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Vorhandene Bewertung aktualisieren",
+                    "title": "Rating Id"
+                  },
+                  "candidate_record_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Kandidat verknüpfen",
+                    "title": "Candidate Record Id"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/document_upload": {
+      "post": {
+        "operationId": "document_upload",
+        "summary": "Datei in ein Anhang-Feld hochladen (pdf, jpg, jpeg, png, doc, docx, max. 10 MB).",
+        "description": "Datei in ein Anhang-Feld hochladen (pdf, jpg, jpeg, png, doc, docx, max. 10 MB).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "record_id": {
+                    "description": "Airtable-Datensatz-ID (rec…)",
+                    "title": "Record Id",
+                    "type": "string"
+                  },
+                  "field": {
+                    "description": "Anhang-Feld, z.B. Lebenslauf",
+                    "title": "Field",
+                    "type": "string"
+                  },
+                  "file": {
+                    "contentMediaType": "application/octet-stream",
+                    "description": "Datei (pdf, jpg, jpeg, png, doc, docx) — Adresse des Datei-Uploaders",
+                    "minLength": 3,
+                    "title": "File",
+                    "type": "string"
+                  },
+                  "filename": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Dateiname mit Endung; sonst aus der Datei abgeleitet",
+                    "title": "Filename"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "note": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optionaler Eintrag in 'Bemerkung zu Dokumenten'",
+                    "title": "Note"
+                  }
+                },
+                "required": [
+                  "record_id",
+                  "field",
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/tasks_manage": {
+      "post": {
+        "operationId": "tasks_manage",
+        "summary": "Aufgaben in Table 1 lesen, anlegen oder Status setzen.",
+        "description": "Aufgaben in Table 1 lesen, anlegen oder Status setzen.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "action": {
+                    "default": "list",
+                    "enum": [
+                      "list",
+                      "create",
+                      "update"
+                    ],
+                    "title": "Action",
+                    "type": "string"
+                  },
+                  "task_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "rec… für update",
+                    "title": "Task Id"
+                  },
+                  "name": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Name"
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Notes"
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "Todo",
+                          "In progress",
+                          "Done"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "title": "Status"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "default": 25,
+                    "maximum": 100,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/automation_rules": {
+      "post": {
+        "operationId": "automation_rules",
+        "summary": "Automatik-Regeln ansehen oder ändern.",
+        "description": "Automatik-Regeln ansehen oder ändern.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "action": {
+                    "default": "get",
+                    "enum": [
+                      "get",
+                      "set"
+                    ],
+                    "title": "Action",
+                    "type": "string"
+                  },
+                  "rules": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": true,
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Regeln (nur bei action=set)",
+                    "title": "Rules"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/automation_run": {
+      "post": {
+        "operationId": "automation_run",
+        "summary": "Automatik ausführen — preview zeigt nur den Plan, apply schreibt Änderungen und Aufgaben.",
+        "description": "Automatik ausführen — preview zeigt nur den Plan, apply schreibt Änderungen und Aufgaben.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "mode": {
+                    "default": "preview",
+                    "enum": [
+                      "preview",
+                      "apply"
+                    ],
+                    "title": "Mode",
+                    "type": "string"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "default": 300,
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  },
+                  "record_ids": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional nur diese Datensätze prüfen (z.B. für einen Testlauf)",
+                    "title": "Record Ids"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/automation_log": {
+      "post": {
+        "operationId": "automation_log",
+        "summary": "Protokoll der Automatik und der Massenänderungen.",
+        "description": "Protokoll der Automatik und der Massenänderungen.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "limit": {
+                    "default": 25,
+                    "maximum": 200,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    }
+  }
+}
