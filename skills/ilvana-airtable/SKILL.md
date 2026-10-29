@@ -1,6 +1,6 @@
 ---
 name: ilvana-airtable
-description: Kandidaten-CRM der Ilvana i Hase in Airtable — lesen, suchen, filtern, schreiben, Dokumente hochladen, Automatik steuern, konfigurieren und die Base-Struktur erweitern. 30 Werkzeuge über MCP oder JSON-HTTP.
+description: Kandidaten-CRM der Ilvana i Hase in Airtable — lesen, suchen, filtern, schreiben, Dokumente hochladen, Automatik steuern, konfigurieren und die Base-Struktur erweitern. 31 Werkzeuge über MCP oder JSON-HTTP.
 ---
 
 # Ilvana Airtable — Kern-Skill
@@ -45,8 +45,8 @@ Der Airtable-Schlüssel liegt im Dienst — kein Agent braucht ihn.
 
 **Automatik (3)** — `automation_rules`, `automation_run`, `automation_log`
 
-**Betrieb (8)** — `audit_list`, `error_log`, `alerts_list`, `data_health`, `hook_test`,
-`config_get`, `config_set`, `service_info`
+**Betrieb (9)** — `audit_list`, `error_log`, `alerts_list`, `data_health`, `hook_test`,
+`config_get`, `config_set`, `service_info`, `schedule_sync`
 
 **Struktur (3)** — `table_create`, `field_create`, `field_update`
 
