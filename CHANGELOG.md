@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.6 — 2026-10-29
+
+- `data_health` prüft alle drei Tabellen (Prijave, Table 1, Casting ocjene) inklusive Aufgaben ohne Namen/Status
+  und Bewertungen ohne Kandidat oder Werte
+- `service_info` zeigt bekannte Clients und tatsächlich gesehene Aufrufer (`clients.seen`)
+- `scripts/sync_airtable_schema.py` erzeugt `docs/airtable-schema.md` aus dem Live-Schema
+- `scripts/status_report.py` prüft drei Quellen (Airtable-MCP, Notion-Sync, GitHub)
+- `docs/hermes-integration.md` beschreibt die Einbindung und den Nachweis über `clients.seen`
+
 ## Statusdashboard 2026-10-29
 
 - `scripts/status_report.py` + `.github/workflows/status.yml`: stündlicher Statusbericht mit Badge
