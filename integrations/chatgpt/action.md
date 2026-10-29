@@ -10,7 +10,7 @@
 
 ## Grenzen
 
-- 30 Operationen = genau das Limit von ChatGPT. Kommen Werkzeuge dazu, zweite Action anlegen.
+- Der Dienst hat **31** Operationen, ChatGPT erlaubt **30**: beim Import eine weglassen (z. B. `schedule_sync`) oder eine zweite Action anlegen.
 - Keine Binärdaten: `document_upload` braucht eine Datei-Adresse (`file`), keinen Chat-Upload.
 - Kein Streaming; 6–12 Sekunden pro Aufruf (Airtable-Abfrage).
 - Der Key steckt in der Action-Konfiguration, nie im Prompt.
