@@ -1,5 +1,12 @@
 # Changelog
 
+## Statusdashboard 2026-10-29
+
+- `scripts/status_report.py` + `.github/workflows/status.yml`: stündlicher Statusbericht mit Badge
+- Notion-Sync: Herzschlag, `GET /status`, `POST /check` mit Alarm bei Ausfall, stündlicher Zeitplan
+- `scripts/generate_api_docs.py`: API-Referenz aus den Live-Schemata
+- `scripts/test_mcp_e2e.py`: End-to-End-Test der MCP-Anbindung
+
 ## Notion Sync 1.0.0 — 2026-10-29
 
 - Neuer Dienst `Ilvana Notion Sync`: spiegelt die 31 Werkzeugschemata in die Notion-Datenbank
