@@ -175,5 +175,5 @@ scripts/smoke.sh                Smoke-Test gegen den laufenden Dienst
 | Werkzeugzahl = OpenAPI-Operationen | CI |
 | STEPLOG je Werkzeug | CI |
 | keine Schlüssel im Repo | CI |
-| laufender Dienst (health, 30 Werkzeuge, Lesetest) | `scripts/smoke.sh` |
+| laufender Dienst (health, mindestens 30 Werkzeuge, Lesetest) | `scripts/smoke.sh` |
 | Verhalten aller Werkzeuge | siehe `CHANGELOG.md` und `docs/setup-und-nutzung.md` |
