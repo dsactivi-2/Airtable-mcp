@@ -20,6 +20,11 @@ Framework-spezifisch:
 - ChatGPT (Web) → `skills/frameworks/chatgpt/SKILL.md`
 - Grok (Web) → `skills/frameworks/grok/SKILL.md`
 
+## Beim Start
+
+1. `POST /tools/service_info` — Version merken, `secrets` prüfen, `tool_names` lesen.
+2. Ist die Version neuer als gemerkt: `changelog` lesen und dieses Skill neu laden.
+
 ## Kurzfassung
 
 1. Erst lesen (`candidate_dossier`), dann schreiben.
