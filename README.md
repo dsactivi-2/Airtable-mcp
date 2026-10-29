@@ -139,6 +139,19 @@ Details: [references/config-and-hooks.md](skills/ilvana-airtable/references/conf
 
 **Struktur (3)** — `table_create`, `field_create`, `field_update`
 
+## Öffentliche OpenAPI-Spec (für ChatGPT Actions und Grok)
+
+| Zweck | URL |
+|---|---|
+| immer aktuell (`main`) | `https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@main/openapi/ilvana-airtable.openapi.json` |
+| unveränderlich (Tag `v1.5.3`) | `https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@v1.5.3/openapi/ilvana-airtable.openapi.json` |
+| Fallback (GitHub raw) | `https://raw.githubusercontent.com/dsactivi-2/Airtable-mcp/main/openapi/ilvana-airtable.openapi.json` |
+| live aus dem Dienst | `https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/openapi.json` — verlangt Bearer-Key |
+
+Die ersten drei sind **ohne Anmeldung** abrufbar; Actions-Importer von ChatGPT und Grok brauchen genau das.
+Die CDN-Variante liefert `application/json` und aktualisiert sich nach jedem Push (Cache ~12 h).
+Für reproduzierbare Setups die Tag-Variante verwenden.
+
 ## Projektstruktur
 
 ```
