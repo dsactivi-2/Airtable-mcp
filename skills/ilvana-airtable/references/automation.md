@@ -2,7 +2,7 @@
 
 ## Was läuft
 
-Täglich 07:00 (Europe/Sarajevo) prüft der Dienst alle Bewerbungen:
+Täglich 07:00 UTC (= 08:00 Europe/Sarajevo) prüft der Dienst alle Bewerbungen **und schreibt** (aktiv):
 
 1. **Tagesbericht** — überfällige Aktionen, Casting- und Visumtermine der nächsten 7 Tage, fehlende Unterlagen
 2. **Regeln** — Statuswechsel und nahende Termine erzeugen Folgeaufgaben
