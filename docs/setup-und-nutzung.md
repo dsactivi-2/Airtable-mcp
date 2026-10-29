@@ -324,3 +324,17 @@ POST /tools/application_create
 den bestehenden Datensatz — anlegen trotzdem nur mit `"allow_duplicate": true`.
 
 Löschen ist weiterhin nicht möglich; ein versehentlich angelegter Datensatz wird in Airtable entfernt.
+
+
+---
+
+## 13. Wer trägt welches Secret ein (verbindlich)
+
+| Secret | Wer | Wo | Warum |
+|---|---|---|---|
+| `AIRTABLE_PAT` | nur ein Mensch (Kontoinhaber) | CodeWords → Projekt → Integrations-Panel | Zugriff auf die Bases. Agenten fragen **nie** danach. |
+| `HOOK_SECRET` | Mensch legt den Wert fest, Agent darf ihn setzen | Panel **oder** `config_set`; derselbe Wert in der Airtable-Automation als `X-Hook-Secret` | ohne Secret ist `apply` gesperrt |
+| `ALERT_WEBHOOK_URL` | Mensch besorgt die Adresse, Agent darf sie setzen | Panel **oder** `config_set` | ohne URL nur gespeicherte Alarme |
+
+Selbstauskunft des Dienstes: `POST /tools/service_info` zeigt Version, Änderungsverlauf und genau diese
+Tabelle mit aktuellem Status (`configured: true/false`).
