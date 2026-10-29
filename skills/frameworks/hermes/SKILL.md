@@ -30,7 +30,7 @@ Danach `skills/ilvana-airtable/SKILL.md` + `references/` als Projektwissen laden
 
 ## Werkzeuge
 
-30 Werkzeuge in Gruppen: Lesen (9), Schreiben (7), Automatik (3), Betrieb (8), Struktur (3).
+31 Werkzeuge in Gruppen: Lesen (9), Schreiben (7), Automatik (3), Betrieb (9), Struktur (3).
 Hermes erkennt sie über `tools/list` selbst — keine manuelle Registrierung.
 
 ## Praktische Hinweise
