@@ -28,7 +28,7 @@ export CODEWORDS_API_KEY="<key>"
 ./scripts/check-mcp.sh
 ```
 
-Erwartet: Serverantwort, 30 Werkzeuge, am Ende die Konfigurationszeilen.
+Erwartet: Serverantwort, 31 Werkzeuge, am Ende die Konfigurationszeilen.
 Das Skript spricht denselben Weg an wie Hermes (Streamable HTTP, `Accept: application/json, text/event-stream`).
 
 ## 3. Wissen laden
