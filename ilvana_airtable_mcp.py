@@ -79,8 +79,16 @@ EARLY_STATUSES = {"Zainteresiran", "Zeleni / obrada"}
 TZ = ZoneInfo("Europe/Sarajevo")
 SCHEMA_TTL = 300
 
-SERVICE_VERSION = "1.5.5"
+SERVICE_VERSION = "1.5.6"
 SERVICE_CHANGELOG: list[dict[str, Any]] = [
+    {
+        "version": "1.5.6",
+        "date": "2026-10-29",
+        "changes": [
+            "data_health prüft alle drei Tabellen (Prijave, Table 1, Casting ocjene)",
+            "service_info zeigt bekannte und tatsächlich gesehene Clients (aus dem Verlauf)",
+        ],
+    },
     {
         "version": "1.5.5",
         "date": "2026-10-29",
@@ -1588,6 +1596,8 @@ async def tool_data_health(m: DataHealthInput) -> dict[str, Any]:
     logger.info("STEPLOG START data_health")
     briefs = await _records_brief(m.base)
     raw = await _fetch_records(m.base, "prijave", max_records=3000)
+    tasks = await _fetch_records(m.base, "tasks", max_records=1000)
+    ratings = await _fetch_records(m.base, "casting", max_records=1000)
     today = _today()
     no_status = [b for b in briefs if not b["status"]]
     no_next_action = [b for b in briefs if not b["next_action"] and b["status"] not in FINAL_STATUSES]
@@ -1608,9 +1618,29 @@ async def tool_data_health(m: DataHealthInput) -> dict[str, Any]:
         if len(digits) >= 7:
             phones.setdefault(digits, []).append(_candidate_name(fields) or record["id"])
     duplicates = [{"phone": key, "names": names} for key, names in phones.items() if len(names) > 1]
+    tasks_without_name = [
+        {"task_id": r["id"]} for r in tasks
+        if not str((r.get("fields") or {}).get("Name") or "").strip()
+    ]
+    tasks_without_status = [
+        {"task_id": r["id"], "name": (r.get("fields") or {}).get("Name")} for r in tasks
+        if not str((r.get("fields") or {}).get("Status") or "").strip()
+    ]
+    ratings_without_candidate = [
+        {"rating_id": r["id"], "label": (r.get("fields") or {}).get("Oznaka")} for r in ratings
+        if not ((r.get("fields") or {}).get("Kandidat") or [])
+    ]
+    score_fields = ("Stručnost (1-5)", "Sigurnost na radu (1-5)", "Motivacija (1-5)",
+                    "Sporazumijevanje (1-5)", "Timski rad (1-5)")
+    ratings_without_score = [
+        {"rating_id": r["id"], "label": (r.get("fields") or {}).get("Oznaka")} for r in ratings
+        if not any((r.get("fields") or {}).get(field) for field in score_fields)
+    ]
     issues = (
         len(no_status) + len(no_next_action) + len(overdue) + len(missing)
         + len(past_appointments) + len(duplicates)
+        + len(tasks_without_name) + len(tasks_without_status)
+        + len(ratings_without_candidate) + len(ratings_without_score)
     )
     if m.notify and issues:
         await _push_alert(
@@ -1624,6 +1654,10 @@ async def tool_data_health(m: DataHealthInput) -> dict[str, Any]:
                 "fehlende_unterlagen": len(missing),
                 "termine_verpasst": len(past_appointments),
                 "doppelte_nummern": len(duplicates),
+                "aufgaben_ohne_namen": len(tasks_without_name),
+                "aufgaben_ohne_status": len(tasks_without_status),
+                "bewertungen_ohne_kandidat": len(ratings_without_candidate),
+                "bewertungen_ohne_werte": len(ratings_without_score),
             },
         )
     return {
@@ -1637,6 +1671,11 @@ async def tool_data_health(m: DataHealthInput) -> dict[str, Any]:
         "missing_documents": missing[: m.limit],
         "past_appointments": past_appointments[: m.limit],
         "duplicate_phones": duplicates[: m.limit],
+        "tables_checked": {"prijave": len(briefs), "tasks": len(tasks), "casting": len(ratings)},
+        "tasks_without_name": tasks_without_name[: m.limit],
+        "tasks_without_status": tasks_without_status[: m.limit],
+        "ratings_without_candidate": ratings_without_candidate[: m.limit],
+        "ratings_without_score": ratings_without_score[: m.limit],
     }
 
 
@@ -1816,12 +1855,29 @@ async def tool_service_info(m: ServiceInfoInput) -> dict[str, Any]:
     webhook = await _effective("alert_webhook_url")
     hook = await _effective("hook_secret")
     pat = bool((os.environ.get("AIRTABLE_PAT") or "").strip())
+    audit_entries = await _read_log("audit", 200)
+    clients: dict[str, dict[str, Any]] = {}
+    for entry in audit_entries:
+        actor = str(entry.get("actor") or "unbekannt")
+        info = clients.setdefault(actor, {"actions": 0, "last_seen": entry.get("at")})
+        info["actions"] += 1
+    known_clients = {
+        "hermes": "MCP-Client, Header X-Actor: hermes",
+        "codex": "MCP oder REST, Header X-Actor: codex",
+        "chatgpt": "Action über /openapi.json, Bearer",
+        "grok": "Custom Action oder Funktionskatalog",
+    }
     return {
         "service": "Ilvana Airtable MCP",
         "version": SERVICE_VERSION,
         "tool_count": len(MODELS),
         "tool_names": list(MODELS),
         "changelog": SERVICE_CHANGELOG,
+        "clients": {
+            "known": known_clients,
+            "seen": clients,
+            "hint": "Setze X-Actor beim Aufruf, damit hier steht, welcher Agent gehandelt hat.",
+        },
         "default_base": config.get("default_base") or "kopieren",
         "secrets": {
             "AIRTABLE_PAT": {
