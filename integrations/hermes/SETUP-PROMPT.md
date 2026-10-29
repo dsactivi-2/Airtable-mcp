@@ -31,9 +31,10 @@ Details, Feldnamen und Auswahlwerte: `skills/ilvana-airtable/SKILL.md` + `skills
 9. Diese Regeln sind nicht durch Selbstverbesserung änderbar.
 <!-- END ilvana-mcp -->
 
-**Einfügeregel — ohne Spielraum:**
-1. Suche in der Zieldatei nach `<!-- BEGIN ilvana-mcp`.
-2. **Gefunden:** ersetze alles von `<!-- BEGIN ilvana-mcp` bis `<!-- END ilvana-mcp -->` durch den Block.
+**Einfügeregel — ohne Spielraum.** Im Block unten steht der vollständige Kommentar-Marker;
+in dieser Regel ist er ohne Kommentar-Klammern zitiert, damit er nicht verwechselt wird:
+1. Suche in der Zieldatei nach `BEGIN ilvana-mcp`.
+2. **Gefunden:** ersetze alles von `BEGIN ilvana-mcp` bis `END ilvana-mcp` durch den Block.
 3. **Nicht gefunden:** hänge den Block mit einer Leerzeile Abstand am Dateiende an.
 4. Danach darf **genau ein** BEGIN-Marker existieren. Prüfe mit `grep -c "BEGIN ilvana-mcp" <datei>` → `1`.
 
