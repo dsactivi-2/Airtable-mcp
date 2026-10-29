@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ilvana Airtable MCP",
-    "version": "1.0.0",
-    "description": "Kandidaten-CRM der Ilvana i Hase: Suche, Kandidatenakte, Schreiben, Dokument-Uploads, Automatik. Alle Aufrufe sind reines JSON."
+    "version": "1.1.0",
+    "description": "Kandidaten-CRM der Ilvana i Hase: Suche, Akte, Schreiben, Uploads, Automatik, Protokoll, Datenqualität."
   },
   "servers": [
     {
@@ -22,8 +22,7 @@
         "scheme": "bearer",
         "description": "CodeWords API Key"
       }
-    },
-    "schemas": {}
+    }
   },
   "paths": {
     "/tools/schema_get": {
@@ -1222,6 +1221,184 @@
                   "limit": {
                     "default": 25,
                     "maximum": 200,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/audit_list": {
+      "post": {
+        "operationId": "audit_list",
+        "summary": "Verlauf: wer wann welches Werkzeug auf welchem Datensatz ausgeführt hat (filterbar nach Werkzeug, Datensatz, Aufrufer).",
+        "description": "Verlauf: wer wann welches Werkzeug auf welchem Datensatz ausgeführt hat (filterbar nach Werkzeug, Datensatz, Aufrufer).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "limit": {
+                    "default": 50,
+                    "maximum": 500,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  },
+                  "tool": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Nur Einträge dieses Werkzeugs",
+                    "title": "Tool"
+                  },
+                  "record_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Nur Einträge zu diesem Datensatz",
+                    "title": "Record Id"
+                  },
+                  "actor": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Nur Einträge dieses Aufrufers",
+                    "title": "Actor"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/error_log": {
+      "post": {
+        "operationId": "error_log",
+        "summary": "Fehlerprotokoll: fehlgeschlagene Aufrufe mit Zeitpunkt, Werkzeug, Aufrufer und Ursache.",
+        "description": "Fehlerprotokoll: fehlgeschlagene Aufrufe mit Zeitpunkt, Werkzeug, Aufrufer und Ursache.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "limit": {
+                    "default": 50,
+                    "maximum": 500,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/alerts_list": {
+      "post": {
+        "operationId": "alerts_list",
+        "summary": "Gespeicherte Alarme (Fehler, Datenauffälligkeiten) und ob ein Alarm-Webhook konfiguriert ist.",
+        "description": "Gespeicherte Alarme (Fehler, Datenauffälligkeiten) und ob ein Alarm-Webhook konfiguriert ist.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "limit": {
+                    "default": 50,
+                    "maximum": 500,
+                    "minimum": 1,
+                    "title": "Limit",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-Ergebnis mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/data_health": {
+      "post": {
+        "operationId": "data_health",
+        "summary": "Qualitätsprüfung: Datensätze ohne Status, ohne nächste Aktion, überfällig, mit fehlenden Unterlagen, verpassten Terminen",
+        "description": "Qualitätsprüfung: Datensätze ohne Status, ohne nächste Aktion, überfällig, mit fehlenden Unterlagen, verpassten Terminen oder doppelten Telefonnummern.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "base": {
+                    "default": "kopieren",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  },
+                  "notify": {
+                    "default": false,
+                    "description": "true = Auffälligkeiten als Alarm melden",
+                    "title": "Notify",
+                    "type": "boolean"
+                  },
+                  "limit": {
+                    "default": 20,
+                    "maximum": 100,
                     "minimum": 1,
                     "title": "Limit",
                     "type": "integer"
