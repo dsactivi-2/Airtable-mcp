@@ -207,11 +207,13 @@ Antwort:
 
 ## 6. Tageslauf
 
-Registriert als Vorschau, täglich 07:00 Europe/Sarajevo, verwaltbar unter
+Registriert und **aktiv (apply)**, täglich 07:00 UTC (08:00 Sarajevo), verwaltbar unter
 [codewords.agemo.ai/scheduled](https://codewords.agemo.ai/scheduled).
 
-- Vorschau: `POST /automation/daily?mode=preview`
-- Echt: `POST /automation/daily?mode=apply`
+- Vorschau: `POST /automation/daily` mit `{"mode":"preview"}`
+- Echt: `POST /automation/daily` mit `{"mode":"apply"}`
+
+Der Modus gehört in den Body — Query-Parameter erreichen den Dienst nicht.
 
 Inhalt: überfällige Aktionen, Termine der nächsten 7 Tage, fehlende Unterlagen, geplante Folgeaufgaben
 und der Ergebnis der Qualitätsprüfung (`health`).
