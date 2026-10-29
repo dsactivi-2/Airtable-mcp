@@ -83,3 +83,51 @@ curl -X POST https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/hooks
 
 - `200` → Secret stimmt
 - `401` → Secret fehlt oder weicht ab
+
+
+## Anforderungen an den Empfänger
+
+Der Dienst schickt `POST` mit `Content-Type: application/json` und **ohne** Auth-Header.
+
+| Anforderung | Warum |
+|---|---|
+| nimmt `POST` mit JSON an | der Alarm ist ein JSON-Objekt |
+| antwortet mit `2xx` | alles andere wird als Fehlschlag protokolliert (`alerts_list` zeigt es) |
+| ist öffentlich erreichbar | kein Auth-Header, kein Signaturverfahren |
+| **kein** CodeWords-Runtime-Endpunkt (`…/run/…`) | der verlangt einen Bearer-Key, den der Alarm nicht mitschickt → 401 |
+
+### Selbsttest vor dem Eintragen
+
+```bash
+curl -i -X POST "<DEINE_URL>" -H 'Content-Type: application/json' \
+  -d '{"service":"ilvana-airtable","kind":"tool_error","message":"Test"}'
+```
+
+`200` → passt. Alles andere → Adresse oder Methode prüfen.
+
+### Wo die Adresse herkommt
+
+| Empfänger | Fundort |
+|---|---|
+| n8n | Node *Webhook* → Production-URL (nach Aktivierung) |
+| Make | *Webhooks → Custom webhook* → „Address" |
+| Zapier | *Webhooks by Zapier → Catch Hook* → angezeigte URL |
+| eigener Server | eigener Endpunkt, z. B. `https://deine-domain.de/alerts/ilvana` |
+| nur zum Testen | webhook.site — öffentlich lesbar, nicht dauerhaft nutzen |
+
+### Wenn der Alarm ankommt
+
+Der Dienst schickt dieses Objekt:
+
+```json
+{
+  "service": "ilvana-airtable",
+  "at": "2026-10-29 05:26",
+  "kind": "tool_error",
+  "message": "application_update: Nicht schreibbare Felder …",
+  "details": {"tool": "application_update", "status": 400},
+  "actor": "z0xsf0pldjxndz50ef5zwmx8"
+}
+```
+
+`kind` ist einer von `tool_error`, `tool_crash`, `validation_error`, `data_health`.
