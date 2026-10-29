@@ -3,12 +3,12 @@
 Ein Dienst, 31 Werkzeuge, vier Agenten-Frameworks. Jeder Agent bekommt **eine** Kerndatei und **eine**
 Framework-Datei.
 
-| Framework | Datei | Verbindungsweg |
-|---|---|---|
-| Hermes Agent | [frameworks/hermes/SKILL.md](frameworks/hermes/SKILL.md) | MCP (Streamable HTTP) |
-| Codex | [frameworks/codex/SKILL.md](frameworks/codex/SKILL.md) | MCP oder REST + `AGENTS.md` |
-| ChatGPT (Web, eigener GPT) | [frameworks/chatgpt/SKILL.md](frameworks/chatgpt/SKILL.md) | Action über OpenAPI |
-| Grok (Web) | [frameworks/grok/SKILL.md](frameworks/grok/SKILL.md) | Custom Action oder Funktionskatalog |
+| Framework | Skill | Anbindung | Setup-Prompt |
+|---|---|---|---|
+| Hermes Agent | [frameworks/hermes/SKILL.md](frameworks/hermes/SKILL.md) | MCP (Streamable HTTP) | [../integrations/hermes/SETUP-PROMPT.md](../integrations/hermes/SETUP-PROMPT.md) |
+| Codex | [frameworks/codex/SKILL.md](frameworks/codex/SKILL.md) | MCP oder REST + `AGENTS.md` | [../integrations/codex/SETUP-PROMPT.md](../integrations/codex/SETUP-PROMPT.md) |
+| ChatGPT (Web) | [frameworks/chatgpt/SKILL.md](frameworks/chatgpt/SKILL.md) | Action über OpenAPI | [../integrations/chatgpt/SETUP-PROMPT.md](../integrations/chatgpt/SETUP-PROMPT.md) |
+| Grok (Web) | [frameworks/grok/SKILL.md](frameworks/grok/SKILL.md) | Custom Action oder Funktionskatalog | [../integrations/grok/SETUP-PROMPT.md](../integrations/grok/SETUP-PROMPT.md) |
 
 Gemeinsame Grundlage für alle: [ilvana-airtable/SKILL.md](ilvana-airtable/SKILL.md) mit den Referenzen
 
