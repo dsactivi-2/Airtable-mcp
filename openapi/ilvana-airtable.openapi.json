@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ilvana Airtable MCP",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "description": "Kandidaten-CRM: Suche, Akte, Anlegen, Ändern, Uploads, Automatik, Protokoll, Konfiguration, Base-Änderungen."
   },
   "servers": [
@@ -1909,6 +1909,29 @@
                   "table",
                   "field_id"
                 ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/service_info": {
+      "post": {
+        "operationId": "service_info",
+        "summary": "Version, Werkzeugliste, Änderungsverlauf und die Zuständigkeit für die drei Secrets (AIRTABLE_PAT, HOOK_SECRET, ALERT_WE",
+        "description": "Version, Werkzeugliste, Änderungsverlauf und die Zuständigkeit für die drei Secrets (AIRTABLE_PAT, HOOK_SECRET, ALERT_WEBHOOK_URL). Nach jedem Verbinden einmal aufrufen.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {},
                 "type": "object"
               }
             }
