@@ -307,3 +307,20 @@ Echt wird es nur mit `preview=false` **und** `confirm=true`.
 
 Voraussetzung: der Airtable-Schlüssel braucht zusätzlich **`schema.bases:write`**. Kein Löschen von
 Tabellen oder Feldern, kein Umbau von Feldtypen.
+
+
+---
+
+## 12. Neue Bewerbung anlegen
+
+```json
+POST /tools/application_create
+{"fields": {"Ime i prezime": "Amar Bitići", "Broj telefona": "061468027",
+            "Status kandidata": "Zainteresiran"},
+ "note": "per Telefon aufgenommen"}
+```
+
+`Ime i prezime` ist Pflicht. Gibt es die Telefonnummer schon, antwortet der Dienst mit **409** und nennt
+den bestehenden Datensatz — anlegen trotzdem nur mit `"allow_duplicate": true`.
+
+Löschen ist weiterhin nicht möglich; ein versehentlich angelegter Datensatz wird in Airtable entfernt.
