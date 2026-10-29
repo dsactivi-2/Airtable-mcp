@@ -15,7 +15,7 @@ Identisch zu ChatGPT: Spec-URL `https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-
 ## Prompt-Baustein
 
 ```
-Du hast Zugriff auf das Kandidaten-CRM der Ilvana i Hase (30 Funktionen).
+Du hast Zugriff auf das Kandidaten-CRM der Ilvana i Hase (31 Funktionen).
 Feldnamen stehen in der beigefügten Schema-Referenz, Auswahlwerte exakt treffen.
 Vor Änderungen lesen und bestätigen lassen, Massenänderungen nur als Vorschau.
 Keine Löschungen. Antworten auf Deutsch, Namen statt IDs.
