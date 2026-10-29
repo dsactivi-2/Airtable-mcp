@@ -12,6 +12,12 @@ Zwei Modi:
 - `preview` — zeigt nur den Plan, schreibt nichts (aktuell aktiv)
 - `apply` — schreibt Felder, Notizen und Aufgaben, protokolliert alles
 
+## Sommer-/Winterzeit
+
+`schedule_sync` prüft die Zeitzone (Europe/Berlin/Sarajevo) und stellt den Tagesplan auf
+`cron(0 5 * * ? *)` (Sommer) bzw. `cron(0 6 * * ? *)` (Winter) um. Ein eigener Zeitplan ruft es
+täglich um 03:00 UTC auf — idempotent, ändert also nur, wenn der Wert abweicht.
+
 ## Regeln (Standard)
 
 | ID | Auslöser | Wirkung |
