@@ -1,3 +1,7 @@
+![Ilvana Stack](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/dsactivi-2/Airtable-mcp/main/status/status.json)
+
+Letzter Bericht: [status/status.md](status/status.md)
+
 # Ilvana Airtable MCP
 
 MCP-Server und JSON-API fuer die Airtable-Bases **Ilvana i Hase (Kopieren)** und **Ilvana i Hase**.
