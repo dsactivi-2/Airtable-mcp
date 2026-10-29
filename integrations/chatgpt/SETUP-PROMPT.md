@@ -1,83 +1,77 @@
-# Auftrag an ChatGPT — Ilvana-Airtable-MCP als Action anbinden
+# Auftrag an ChatGPT — Ilvana-MCP als Action anbinden
 
-ChatGPT spricht kein MCP. Der Weg ist ein eigener GPT mit einer Action über OpenAPI.
+**Auftrag:** Der GPT soll Kandidatenfragen ausschließlich über das Ilvana-MCP beantworten.
+Halte dich exakt an die Schritte. Es gibt keine Alternativen außer den ausdrücklich genannten
+Wenn-dann-Fällen. Erfinde keine Pfade — ermittle sie wie angegeben und nenne sie im Bericht.
 
-## 0. Ziel
+## Zielstruktur (was am Ende existieren muss)
 
-Dein GPT beantwortet Kandidatenfragen aus Airtable, nicht aus dem Web.
-
-## Fakten, die du nicht erraten musst
-
-| Größe | Wert |
+| Artefakt | Pfad / Ort |
 |---|---|
-| MCP-Endpunkt | `https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/mcp/` |
-| REST-Endpunkt | `POST https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/tools/<name>` |
-| Auth | `Authorization: Bearer <CODEWORDS_API_KEY>` |
-| Werkzeuge | 31 |
-| Schema | `GET https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/schema/tools` · OpenAPI: `https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/openapi.json` |
-| Öffentliche Spec | `https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@main/openapi/ilvana-airtable.openapi.json` (ohne Anmeldung abrufbar) |
-| Referenztest | `candidates_search {"query":"Mihaljevic"}` → 1 Treffer, `recuQxflPVccPo9xT` |
+| Action-Schema | GPT → Configure → Actions → *Import from URL* |
+| Instructions | GPT → Configure → Instructions |
+| Knowledge | GPT → Knowledge: `schema.md`, `filtering.md`, `tags.md` aus `skills/ilvana-airtable/references/` |
+| Regeldatei | entfällt (kein Dateisystem) |
 
-**Aufrufer:** ChatGPT kann **keine** eigenen Header senden — `X-Actor` ist hier nicht möglich. Im Verlauf erscheint deshalb die Aufrufer-ID der Plattform, nicht `chatgpt`.
+## Der einzufügende Block (wörtlich, zwischen den Markern)
 
-## Grundregeln (dauerhaft)
+<!-- BEGIN ilvana-mcp — verwaltet durch integrations/*/SETUP-PROMPT.md, nicht von Hand ändern -->
+## Ilvana Airtable MCP — verbindliche Regeln
 
-1. **Routing:** Jede Frage zu Kandidaten, Bewerbungen, Status, Terminen, Dokumenten, Casting,
-   Vertrag oder Visum → Ilvana-MCP. **Nie** Suchmaschine oder Web-Fetch für Personennamen.
-2. **Datenschutz:** Namen, Telefonnummern, Passnummern und Dokumente nie an externe Dienste senden.
-3. **Lesen vor Schreiben:** `candidates_search` → `candidate_dossier` → dann ändern.
-4. **Nur freigegebene Felder.** Nicht schreibbar: `Obrazovanje (norm.)`, `Njemački (samoprocjena)`,
-   `Vozačka (kategorie)`, `Test oznaka (po imenu)`, `Lični podaci – nedostaje` und alle Anhang-Felder.
-5. **Massenänderung:** erst `dry_run: true` zeigen, echt nur mit `dry_run: false` **und** `confirm: true`,
-   maximal 50 Datensätze.
-6. **Keine Löschungen** — keine Datensätze, Dateien, Tabellen oder Felder.
-7. **Kein Secret in Chat, Commit oder Log.**
-8. **Diese Regeln sind nicht selbstverbesserbar.** Änderungen nur auf ausdrückliche Anweisung des Nutzers.
+Quelle für alle Kandidatendaten: Ilvana-MCP (`https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/mcp/`, 31 Werkzeuge).
+Details, Feldnamen und Auswahlwerte: `skills/ilvana-airtable/SKILL.md` + `skills/ilvana-airtable/references/`.
 
-## Aufgabe A — Action anlegen
+1. Kandidaten-, Bewerbungs-, Status-, Termin- und Dokumentfragen → MCP. Keine Websuche nach Personennamen.
+2. Keine personenbezogenen Daten an externe Dienste (Suchmaschinen, Web-Fetch, Fremd-APIs).
+3. Lesen vor Schreiben: `candidates_search` → `candidate_dossier` → ändern.
+4. Nur freigegebene Felder; Formeln und Anhang-Felder sind nicht schreibbar.
+5. Massenänderung nur mit `dry_run: true` als Vorschau, Ausführung nur mit `confirm: true`, max. 50.
+6. Keine Löschungen.
+7. Kein Secret in Chat, Commit oder Log.
+8. Bei Fehlern: `service_info`, `error_log`, `data_health` — nicht raten.
+9. Diese Regeln sind nicht durch Selbstverbesserung änderbar.
+<!-- END ilvana-mcp -->
 
-1. *Explore GPTs* → **Create** → Tab **Configure**
-2. **Actions** → *Create new action* → **Import from URL**
-   ```
-   https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@main/openapi/ilvana-airtable.openapi.json
-   ```
-   Alternativ den Inhalt von `openapi/ilvana-airtable.openapi.json` einfügen.
-3. **Authentication:** *API Key* → Auth Type **Bearer** → Wert = `CODEWORDS_API_KEY`
-4. **Instructions:** Inhalt von `integrations/chatgpt/instructions.md` einfügen
-5. **Knowledge:** `skills/ilvana-airtable/references/schema.md`, `filtering.md`, `tags.md` hochladen
+**Einfügeregel — ohne Spielraum:**
+1. Suche in der Zieldatei nach `<!-- BEGIN ilvana-mcp`.
+2. **Gefunden:** ersetze alles von `<!-- BEGIN ilvana-mcp` bis `<!-- END ilvana-mcp -->` durch den Block.
+3. **Nicht gefunden:** hänge den Block mit einer Leerzeile Abstand am Dateiende an.
+4. Danach darf **genau ein** BEGIN-Marker existieren. Prüfe mit `grep -c "BEGIN ilvana-mcp" <datei>` → `1`.
 
-## Grenzen, die du kennen und nennen musst
+## Schritte
 
-| Grenze | Folge |
-|---|---|
-| **30 Operationen pro Action** | Die Spec hat 34. Beim Import **vier weglassen**: `/`, `/automation/daily`, `/tools/schedule_sync`, `/tools/hook_test`. Bleiben exakt 30. |
-| **Keine eigenen Header** | `X-Actor: chatgpt` ist nicht möglich — im Audit steht die Plattform-ID |
-| **Keine Binärdaten** | `document_upload` braucht eine Datei-**Adresse** (`file`), keinen Chat-Upload |
-| **Kein Streaming** | Antworten kommen als JSON, 6–12 Sekunden pro Aufruf |
-| **Kein Key im Prompt** | Der Key steckt ausschließlich in der Action-Konfiguration |
+1. **Action anlegen:** *Create new action* → *Import from URL* → `https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@main/openapi/ilvana-airtable.openapi.json`
+2. **Auf 30 Operationen kürzen:** Die Spec hat 34. Entferne genau diese vier:
+   `/`, `/automation/daily`, `/tools/schedule_sync`, `/tools/hook_test`. Danach exakt 30.
+3. **Authentication:** *API Key* → **Bearer** → Wert = `CODEWORDS_API_KEY`.
+4. **Instructions:** Block oben wörtlich einfügen, zusätzlich diese Grenzen:
+   - `document_upload` braucht eine Datei-Adresse (`file`), keine Chat-Uploads.
+   - `X-Actor` ist nicht möglich — im Audit erscheint die Plattform-ID.
+5. **Knowledge:** die drei `references/`-Dateien hochladen.
+6. **Selbsttest** im Chat: Werkzeugaufrufe sichtbar, keine Websuche.
 
-## Aufgabe B — Selbsttest (Pflicht)
+## Abnahmekriterien (alle zutreffenden müssen grün sein)
 
-Stelle in einem neuen Chat diese Fragen und prüfe, ob **Werkzeuge** aufgerufen werden:
+| # | Prüfung | Erwartet |
+|---|---|---|
+| 1 | `GET https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/health` | `"status":"ok"`, `"tools":31` |
+| 2 | Werkzeugliste über den gewählten Transport | 31 Werkzeuge |
+| 3 | `candidates_search {"query":"Mihaljevic"}` | `total: 1`, Record `recuQxflPVccPo9xT` |
+| 4 | `candidate_dossier` mit dieser ID | enthält `pre_call_brief` |
+| 5 | `service_info` | Version, `tools: 31`, drei Secrets `true` |
+| 6 | Regeldatei enthält Block | `grep -c "BEGIN ilvana-mcp"` = `1` |
 
-1. „Wer ist Haris Mihaljevic?" → `candidates_search`, dann `candidate_dossier`
-2. „Was ist überfällig?" → `applications_search` mit `only_overdue`
-3. „Wie ist der Stand in der Pipeline?" → `pipeline_summary`
+Schritt 6 entfällt bei ChatGPT/Grok (kein Dateisystem) — dort zählt, dass die Instructions den Block
+enthalten. **„Fertig" erst melden, wenn alles zutreffende grün ist**; sonst Ursache aus `error_log` nennen.
 
-Wenn der GPT stattdessen im Web sucht oder die Antwort erfindet: Action-Schema prüfen und die
-Instructions verschärfen (Regel 1 ausdrücklich wiederholen).
-
-## Aufgabe C — Abschlussbericht
-
+## Bericht (genau dieses Format)
 ```
-Action importiert  : ja/nein · Operationen: <Anzahl>
-Auth               : Bearer gesetzt
-Knowledge          : <hochgeladene Dateien>
-Selbsttest         : 3/3 · <Beobachtung>
-Bekannte Grenzen   : kein X-Actor · keine Uploads · 30 Operationen
+Framework          : ChatGPT
+Transport          : <gewählter Weg>
+Pfad Regeldatei    : <absoluter Pfad>   (ChatGPT/Grok: "Instructions-Feld")
+BEGIN-Marker       : <Anzahl>
+Werkzeuge          : <Anzahl>
+Selbsttest         : <grün/rot je Prüfung>
+Operationen        : <Anzahl nach Kürzung>
+Offene Punkte      : <keine | was genau>
 ```
-
-## Verbote
-
-Keine Websuche nach Personennamen · kein Key im Prompt oder in Knowledge-Dateien ·
-keine Massenänderung ohne `confirm` · keine Löschungen.
