@@ -11,7 +11,7 @@ Grok hat **keinen** MCP-Connector. Zwei Wege funktionieren:
 
 Identisch zu ChatGPT:
 
-1. Aktion anlegen, `https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/openapi.json` importieren (oder die Datei aus dem Repo)
+1. Aktion anlegen, `https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@main/openapi/ilvana-airtable.openapi.json` importieren (oder die Datei aus dem Repo)
 2. Auth: **Bearer** mit `CODEWORDS_API_KEY`
 3. Server-URL steht bereits im Schema
 
