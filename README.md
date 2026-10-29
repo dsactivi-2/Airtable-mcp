@@ -143,6 +143,11 @@ Details: [references/config-and-hooks.md](skills/ilvana-airtable/references/conf
 
 **Struktur (3)** — `table_create`, `field_create`, `field_update`
 
+## Notion-Sync
+
+Die Werkzeugschemata werden täglich in eine Notion-Datenbank gespiegelt:
+[docs/notion-sync.md](docs/notion-sync.md)
+
 ## Öffentliche OpenAPI-Spec (für ChatGPT Actions und Grok)
 
 | Zweck | URL |
