@@ -3,7 +3,7 @@
 ## 1.5.4 — 2026-10-29
 
 - `POST /automation/daily` nimmt `base` und `mode` als JSON-Body (Query-Parameter erreichen den Dienst über die Runtime nicht)
-- Tageslauf auf **apply** umgestellt, täglich 07:00 UTC; erster Lauf geprüft: Emrah Dzafic erhielt Frist 2026-10-31 und eine Aufgabe
+- Tageslauf auf **apply** umgestellt, täglich 06:00 UTC = 07:00 Ortszeit (Winterzeit); erster Lauf geprüft: Emrah Dzafic erhielt Frist 2026-10-31 und eine Aufgabe
 
 ## 1.5.3 — 2026-10-29
 
