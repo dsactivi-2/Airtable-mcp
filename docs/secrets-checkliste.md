@@ -8,7 +8,7 @@ Stand: Version 1.5.1 · drei Variablen, mehr nicht.
 |---|---|---|---|
 | `AIRTABLE_PAT` | **ja** | Kontoinhaber (Mensch) | CodeWords → Projekt → Integrations-Panel |
 | `HOOK_SECRET` | **ja** | Mensch legt Wert fest (Agent darf setzen) | `config_set` oder Panel — Aufruf erfolgt über das Feld `hook_secret` im JSON-Body |
-| `ALERT_WEBHOOK_URL` | nein | Mensch besorgt die Adresse | `config_set` oder Panel |
+| `ALERT_WEBHOOK_URL` | **ja** | Mensch besorgt die Adresse | `config_set` oder Panel |
 
 Abfragen mit `POST /tools/service_info` → Abschnitt `secrets` zeigt je `configured: true/false`.
 
@@ -62,6 +62,17 @@ Erwartetes JSON:
 `kind`: `tool_error`, `tool_crash`, `validation_error`, `data_health`.
 
 Ohne URL gehen Alarme nicht verloren — sie liegen in `alerts_list` (`webhook_configured: false`).
+
+## Zustellung prüfen
+
+`alerts_list` zeigt pro Alarm, ob der Empfänger angenommen hat:
+
+```json
+{"at":"2026-10-29 10:20","kind":"tool_error","webhook_configured":true,
+ "delivered":true,"delivery_status":200,"delivery_error":null}
+```
+
+`delivered: false` mit `delivery_error` → Adresse, Methode oder Erreichbarkeit prüfen.
 
 ## Wechseln
 
