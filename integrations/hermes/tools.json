@@ -1,0 +1,1627 @@
+{
+ "version": "1.5.5",
+ "source": "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/schema/tools",
+ "tools": [
+  {
+   "type": "function",
+   "function": {
+    "name": "schema_get",
+    "description": "Tabellen, Felder, Typen und erlaubte Auswahlwerte einer Base (kopieren|original).",
+    "parameters": {
+     "properties": {
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "include_choices": {
+       "default": true,
+       "description": "Auswahlwerte mitliefern",
+       "title": "Include Choices",
+       "type": "boolean"
+      },
+      "refresh": {
+       "default": false,
+       "description": "Schema neu von Airtable laden",
+       "title": "Refresh",
+       "type": "boolean"
+      }
+     },
+     "title": "SchemaGetInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "candidates_search",
+    "description": "Kandidaten suchen über Name, Telefon (Handy oder Festnetz), Kundennummer oder Passnummer.",
+    "parameters": {
+     "properties": {
+      "query": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Freitext: Name, Kundennummer, Passnummer",
+       "title": "Query"
+      },
+      "phone": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Handy- oder Festnetznummer, beliebiges Format",
+       "title": "Phone"
+      },
+      "status": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Status kandidata (exakt)",
+       "title": "Status"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "limit": {
+       "default": 25,
+       "description": "Treffer pro Seite",
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      },
+      "offset": {
+       "default": 0,
+       "description": "Seiten-Offset",
+       "minimum": 0,
+       "title": "Offset",
+       "type": "integer"
+      }
+     },
+     "title": "CandidatesSearchInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "applications_search",
+    "description": "Bewerbungen filtern nach Status, Casting-Gruppe/-Ausgang, Vertrag, Visum, Zeiträumen, überfälligen Aktionen und fehlenden Unterlagen.",
+    "parameters": {
+     "properties": {
+      "query": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Freitext über Name, Telefon, Kundennummer, Passnummer",
+       "title": "Query"
+      },
+      "phone": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Telefonnummer in beliebigem Format",
+       "title": "Phone"
+      },
+      "status_kandidata": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Status kandidata exakt, z.B. Casting, Primljeni, Ugovor",
+       "title": "Status Kandidata"
+      },
+      "casting_grupa": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Casting-Gruppe: UJUTRO oder POPODNE",
+       "title": "Casting Grupa"
+      },
+      "casting_ishod": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Casting-Ergebnis, z.B. Došao, Prošao praktični",
+       "title": "Casting Ishod"
+      },
+      "ugovor_tok": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Vertragsstand: Priprema, Poslato kandidatu, Potpisan, Poslato nadležnima",
+       "title": "Ugovor Tok"
+      },
+      "visa_ishod": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Visum-Ergebnis: Dopuna, Dobio vizu, Odbijenica",
+       "title": "Visa Ishod"
+      },
+      "casting_from": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Termin casting ab (YYYY-MM-DD)",
+       "title": "Casting From"
+      },
+      "casting_to": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Termin casting bis (YYYY-MM-DD)",
+       "title": "Casting To"
+      },
+      "action_due_before": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Rok akcije vor (YYYY-MM-DD)",
+       "title": "Action Due Before"
+      },
+      "only_overdue": {
+       "default": false,
+       "description": "Nur überfällige Aktionen",
+       "title": "Only Overdue",
+       "type": "boolean"
+      },
+      "only_missing_documents": {
+       "default": false,
+       "description": "Nur unvollständige Unterlagen",
+       "title": "Only Missing Documents",
+       "type": "boolean"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "sort_by": {
+       "default": "action_due",
+       "description": "action_due | name | status | casting_date",
+       "title": "Sort By",
+       "type": "string"
+      },
+      "sort_dir": {
+       "default": "asc",
+       "description": "Sortierrichtung",
+       "enum": [
+        "asc",
+        "desc"
+       ],
+       "title": "Sort Dir",
+       "type": "string"
+      },
+      "limit": {
+       "default": 25,
+       "description": "Treffer pro Seite",
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      },
+      "offset": {
+       "default": 0,
+       "description": "Seiten-Offset",
+       "minimum": 0,
+       "title": "Offset",
+       "type": "integer"
+      }
+     },
+     "title": "ApplicationsSearchInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "candidate_dossier",
+    "description": "Komplette Kandidatenakte als ein JSON: Stammdaten, Prozess, Termine, Dokumente, Bewertungen, Aufgaben, Vorab-Text für einen Anruf.",
+    "parameters": {
+     "properties": {
+      "record_id": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Airtable-Datensatz-ID (rec…)",
+       "title": "Record Id"
+      },
+      "query": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Alternativ: Name",
+       "title": "Query"
+      },
+      "phone": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Alternativ: Telefonnummer",
+       "title": "Phone"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      }
+     },
+     "title": "CandidateDossierInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "application_get",
+    "description": "Eine Bewerbung mit allen Feldern und Dokumenten.",
+    "parameters": {
+     "properties": {
+      "record_id": {
+       "description": "Airtable-Datensatz-ID (rec…)",
+       "title": "Record Id",
+       "type": "string"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      }
+     },
+     "required": [
+      "record_id"
+     ],
+     "title": "ApplicationGetInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "documents_list",
+    "description": "Hinterlegte Dateien eines Kandidaten mit Name, Typ, Größe und Link.",
+    "parameters": {
+     "properties": {
+      "record_id": {
+       "description": "Airtable-Datensatz-ID (rec…)",
+       "title": "Record Id",
+       "type": "string"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      }
+     },
+     "required": [
+      "record_id"
+     ],
+     "title": "DocumentsListInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "casting_ratings_list",
+    "description": "Casting-Bewertungen, optional nur für einen Kandidaten.",
+    "parameters": {
+     "properties": {
+      "candidate_record_id": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Nur Bewertungen dieses Kandidaten",
+       "title": "Candidate Record Id"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "limit": {
+       "default": 50,
+       "description": "Maximale Anzahl",
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     },
+     "title": "CastingRatingsListInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "pipeline_summary",
+    "description": "Übersicht: Anzahl je Status, überfällige Aktionen, fehlende Unterlagen, Termine der nächsten 7 Tage.",
+    "parameters": {
+     "properties": {
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      }
+     },
+     "title": "PipelineSummaryInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "due_report",
+    "description": "Tagesbericht: fällige und überfällige Aktionen, Casting- und Visumtermine, fehlende Unterlagen.",
+    "parameters": {
+     "properties": {
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "days_ahead": {
+       "default": 7,
+       "description": "Termine der nächsten X Tage",
+       "maximum": 60,
+       "minimum": 1,
+       "title": "Days Ahead",
+       "type": "integer"
+      }
+     },
+     "title": "DueReportInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "application_update",
+    "description": "Freigegebene Felder einer Bewerbung setzen; optional mit Protokoll-Notiz.",
+    "parameters": {
+     "properties": {
+      "record_id": {
+       "description": "Airtable-Datensatz-ID (rec…)",
+       "title": "Record Id",
+       "type": "string"
+      },
+      "fields": {
+       "additionalProperties": true,
+       "description": "Zu setzende Felder (nur freigegebene)",
+       "title": "Fields",
+       "type": "object"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "note": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Optionaler Protokoll-Eintrag",
+       "title": "Note"
+      }
+     },
+     "required": [
+      "record_id",
+      "fields"
+     ],
+     "title": "ApplicationUpdateInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "application_create",
+    "description": "Neue Bewerbung anlegen (mindestens 'Ime i prezime'); prüft vorher auf gleiche Telefonnummer und legt nur mit allow_duplicate=true trotzdem an.",
+    "parameters": {
+     "properties": {
+      "fields": {
+       "additionalProperties": true,
+       "description": "Felder des neuen Datensatzes; 'Ime i prezime' ist Pflicht",
+       "title": "Fields",
+       "type": "object"
+      },
+      "note": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Optionaler Startvermerk in 'Bilješka'",
+       "title": "Note"
+      },
+      "allow_duplicate": {
+       "default": false,
+       "description": "true = trotz gleicher Telefonnummer anlegen",
+       "title": "Allow Duplicate",
+       "type": "boolean"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      }
+     },
+     "required": [
+      "fields"
+     ],
+     "title": "ApplicationCreateInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "applications_bulk_update",
+    "description": "Mehrere Kandidaten gleichzeitig ändern — standardmäßig nur Vorschau, Schreiben erst mit dry_run=false und confirm=true, maximal 50 Datensätze.",
+    "parameters": {
+     "properties": {
+      "fields": {
+       "additionalProperties": true,
+       "description": "Zu setzende Felder für alle Treffer",
+       "title": "Fields",
+       "type": "object"
+      },
+      "record_ids": {
+       "anyOf": [
+        {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Explizite Datensatz-IDs",
+       "title": "Record Ids"
+      },
+      "filter": {
+       "anyOf": [
+        {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Filter wie bei applications_search",
+       "title": "Filter"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "limit": {
+       "default": 50,
+       "description": "Maximal 50 Datensätze pro Aufruf",
+       "maximum": 50,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      },
+      "dry_run": {
+       "default": true,
+       "description": "true = nur Vorschau",
+       "title": "Dry Run",
+       "type": "boolean"
+      },
+      "confirm": {
+       "default": false,
+       "description": "Muss true sein, damit geschrieben wird",
+       "title": "Confirm",
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "fields"
+     ],
+     "title": "BulkUpdateInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "application_add_note",
+    "description": "Notiz mit Zeitstempel und Verfasser anhängen (bestehende Notizen bleiben erhalten).",
+    "parameters": {
+     "properties": {
+      "record_id": {
+       "description": "Airtable-Datensatz-ID (rec…)",
+       "title": "Record Id",
+       "type": "string"
+      },
+      "note": {
+       "description": "Notiztext",
+       "maxLength": 4000,
+       "minLength": 1,
+       "title": "Note",
+       "type": "string"
+      },
+      "author": {
+       "default": "agent",
+       "description": "Verfasser, erscheint in der Notiz",
+       "maxLength": 80,
+       "title": "Author",
+       "type": "string"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      }
+     },
+     "required": [
+      "record_id",
+      "note"
+     ],
+     "title": "AddNoteInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "casting_rating_upsert",
+    "description": "Casting-Bewertung anlegen oder aktualisieren, inklusive Verknüpfung zum Kandidaten.",
+    "parameters": {
+     "properties": {
+      "fields": {
+       "additionalProperties": true,
+       "description": "Bewertungsfelder",
+       "title": "Fields",
+       "type": "object"
+      },
+      "rating_id": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Vorhandene Bewertung aktualisieren",
+       "title": "Rating Id"
+      },
+      "candidate_record_id": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Kandidat verknüpfen",
+       "title": "Candidate Record Id"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      }
+     },
+     "title": "CastingRatingInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "document_upload",
+    "description": "Datei in ein Anhang-Feld hochladen (pdf, jpg, jpeg, png, doc, docx, max. 10 MB).",
+    "parameters": {
+     "properties": {
+      "record_id": {
+       "description": "Airtable-Datensatz-ID (rec…)",
+       "title": "Record Id",
+       "type": "string"
+      },
+      "field": {
+       "description": "Anhang-Feld, z.B. Lebenslauf",
+       "title": "Field",
+       "type": "string"
+      },
+      "file": {
+       "contentMediaType": "application/octet-stream",
+       "description": "Datei (pdf, jpg, jpeg, png, doc, docx) — Adresse des Datei-Uploaders",
+       "minLength": 3,
+       "title": "File",
+       "type": "string"
+      },
+      "filename": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Dateiname mit Endung; sonst aus der Datei abgeleitet",
+       "title": "Filename"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "note": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Optionaler Eintrag in 'Bemerkung zu Dokumenten'",
+       "title": "Note"
+      }
+     },
+     "required": [
+      "record_id",
+      "field",
+      "file"
+     ],
+     "title": "DocumentUploadInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "tasks_manage",
+    "description": "Aufgaben in Table 1 lesen, anlegen oder Status setzen.",
+    "parameters": {
+     "properties": {
+      "action": {
+       "default": "list",
+       "description": "list, create oder update",
+       "enum": [
+        "list",
+        "create",
+        "update"
+       ],
+       "title": "Action",
+       "type": "string"
+      },
+      "task_id": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "rec… für update",
+       "title": "Task Id"
+      },
+      "name": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Aufgabentitel",
+       "title": "Name"
+      },
+      "notes": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Beschreibung der Aufgabe",
+       "title": "Notes"
+      },
+      "status": {
+       "anyOf": [
+        {
+         "enum": [
+          "Todo",
+          "In progress",
+          "Done"
+         ],
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Aufgabenstatus",
+       "title": "Status"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "limit": {
+       "default": 25,
+       "description": "Treffer pro Seite",
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     },
+     "title": "TasksManageInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "automation_rules",
+    "description": "Automatik-Regeln ansehen oder ändern.",
+    "parameters": {
+     "properties": {
+      "action": {
+       "default": "get",
+       "description": "get = Regeln ansehen, set = Regeln überschreiben",
+       "enum": [
+        "get",
+        "set"
+       ],
+       "title": "Action",
+       "type": "string"
+      },
+      "rules": {
+       "anyOf": [
+        {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Regeln (nur bei action=set)",
+       "title": "Rules"
+      }
+     },
+     "title": "AutomationRulesInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "automation_run",
+    "description": "Automatik ausführen — preview zeigt nur den Plan, apply schreibt Änderungen und Aufgaben.",
+    "parameters": {
+     "properties": {
+      "mode": {
+       "default": "preview",
+       "description": "preview = nur zeigen, apply = schreiben",
+       "enum": [
+        "preview",
+        "apply"
+       ],
+       "title": "Mode",
+       "type": "string"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "limit": {
+       "default": 300,
+       "description": "Maximale Anzahl Datensätze",
+       "maximum": 1000,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      },
+      "record_ids": {
+       "anyOf": [
+        {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Optional nur diese Datensätze prüfen (z.B. für einen Testlauf)",
+       "title": "Record Ids"
+      }
+     },
+     "title": "AutomationRunInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "automation_log",
+    "description": "Protokoll der Automatik und der Massenänderungen.",
+    "parameters": {
+     "properties": {
+      "limit": {
+       "default": 25,
+       "description": "Anzahl Einträge",
+       "maximum": 200,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     },
+     "title": "AutomationLogInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "audit_list",
+    "description": "Verlauf: wer wann welches Werkzeug auf welchem Datensatz ausgeführt hat (filterbar nach Werkzeug, Datensatz, Aufrufer).",
+    "parameters": {
+     "properties": {
+      "limit": {
+       "default": 50,
+       "description": "Anzahl Einträge",
+       "maximum": 500,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      },
+      "tool": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Nur Einträge dieses Werkzeugs",
+       "title": "Tool"
+      },
+      "record_id": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Nur Einträge zu diesem Datensatz",
+       "title": "Record Id"
+      },
+      "actor": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Nur Einträge dieses Aufrufers",
+       "title": "Actor"
+      }
+     },
+     "title": "AuditListInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "error_log",
+    "description": "Fehlerprotokoll: fehlgeschlagene Aufrufe mit Zeitpunkt, Werkzeug, Aufrufer und Ursache.",
+    "parameters": {
+     "properties": {
+      "limit": {
+       "default": 50,
+       "description": "Anzahl Einträge",
+       "maximum": 500,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     },
+     "title": "ErrorLogInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "alerts_list",
+    "description": "Gespeicherte Alarme (Fehler, Datenauffälligkeiten) und ob ein Alarm-Webhook konfiguriert ist.",
+    "parameters": {
+     "properties": {
+      "limit": {
+       "default": 50,
+       "description": "Anzahl Einträge",
+       "maximum": 500,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     },
+     "title": "AlertsInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "data_health",
+    "description": "Qualitätsprüfung: Datensätze ohne Status, ohne nächste Aktion, überfällig, mit fehlenden Unterlagen, verpassten Terminen oder doppelten Telefonnummern.",
+    "parameters": {
+     "properties": {
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "notify": {
+       "default": false,
+       "description": "true = Auffälligkeiten als Alarm melden",
+       "title": "Notify",
+       "type": "boolean"
+      },
+      "limit": {
+       "default": 20,
+       "description": "Beispiele pro Kategorie",
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     },
+     "title": "DataHealthInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "hook_test",
+    "description": "Testet die Anbindung an Airtable-Automationen: zeigt Hook-URL, Header und was ein Aufruf auslösen würde — ohne etwas zu schreiben.",
+    "parameters": {
+     "properties": {
+      "record_id": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Datensatz für den Test (optional)",
+       "title": "Record Id"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      }
+     },
+     "title": "HookTestInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "config_get",
+    "description": "Aktuelle Konfiguration anzeigen: Standard-Base, ob Alarm-Webhook und Hook-Secret gesetzt sind.",
+    "parameters": {
+     "properties": {},
+     "title": "ConfigGetInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "config_set",
+    "description": "Konfiguration ändern: Alarm-Webhook, Hook-Secret, Standard-Base — wirkt sofort, ohne Redeploy.",
+    "parameters": {
+     "properties": {
+      "alert_webhook_url": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "HTTPS-Adresse für Alarme",
+       "title": "Alert Webhook Url"
+      },
+      "hook_secret": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Gemeinsames Passwort für /hooks/airtable",
+       "title": "Hook Secret"
+      },
+      "default_base": {
+       "anyOf": [
+        {
+         "enum": [
+          "kopieren",
+          "original"
+         ],
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Base, wenn ein Aufruf keine nennt",
+       "title": "Default Base"
+      },
+      "clear": {
+       "anyOf": [
+        {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Schlüssel entfernen, z.B. ['alert_webhook_url']",
+       "title": "Clear"
+      }
+     },
+     "title": "ConfigSetInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "table_create",
+    "description": "Neue Tabelle in der Base anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
+    "parameters": {
+     "properties": {
+      "name": {
+       "description": "Name der neuen Tabelle",
+       "maxLength": 80,
+       "minLength": 1,
+       "title": "Name",
+       "type": "string"
+      },
+      "fields": {
+       "description": "Felder: [{\"name\": \"Name\", \"type\": \"singleLineText\"}]",
+       "items": {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       "title": "Fields",
+       "type": "array"
+      },
+      "description": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Beschreibung der Tabelle",
+       "title": "Description"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "preview": {
+       "default": true,
+       "description": "true = nur zeigen, was gesendet würde",
+       "title": "Preview",
+       "type": "boolean"
+      },
+      "confirm": {
+       "default": false,
+       "description": "Muss true sein, damit die Tabelle entsteht",
+       "title": "Confirm",
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "name",
+      "fields"
+     ],
+     "title": "TableCreateInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "field_create",
+    "description": "Neues Feld in einer Tabelle anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
+    "parameters": {
+     "properties": {
+      "table": {
+       "description": "Tabellenname oder Schlüssel (prijave, casting, tasks)",
+       "title": "Table",
+       "type": "string"
+      },
+      "name": {
+       "description": "Feldname",
+       "maxLength": 80,
+       "minLength": 1,
+       "title": "Name",
+       "type": "string"
+      },
+      "type": {
+       "description": "Airtable-Feldtyp, z.B. singleLineText, singleSelect, date, number",
+       "title": "Type",
+       "type": "string"
+      },
+      "options": {
+       "anyOf": [
+        {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Optionen, z.B. choices für singleSelect",
+       "title": "Options"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "preview": {
+       "default": true,
+       "description": "true = nur zeigen, was gesendet würde",
+       "title": "Preview",
+       "type": "boolean"
+      },
+      "confirm": {
+       "default": false,
+       "description": "Muss true sein, damit wirklich geschrieben wird",
+       "title": "Confirm",
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "table",
+      "name",
+      "type"
+     ],
+     "title": "FieldCreateInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "field_update",
+    "description": "Feld umbenennen oder Auswahlwerte ändern (Vorschau zuerst, echte Änderung nur mit confirm).",
+    "parameters": {
+     "properties": {
+      "table": {
+       "description": "Tabellenname oder Schlüssel",
+       "title": "Table",
+       "type": "string"
+      },
+      "field_id": {
+       "description": "Feld-ID fld…",
+       "title": "Field Id",
+       "type": "string"
+      },
+      "name": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Neuer Name",
+       "title": "Name"
+      },
+      "options": {
+       "anyOf": [
+        {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Neue Optionen (z.B. choices)",
+       "title": "Options"
+      },
+      "base": {
+       "default": "kopieren",
+       "description": "Base: kopieren (Standard) oder original",
+       "enum": [
+        "kopieren",
+        "original"
+       ],
+       "title": "Base",
+       "type": "string"
+      },
+      "preview": {
+       "default": true,
+       "description": "true = nur zeigen, was gesendet würde",
+       "title": "Preview",
+       "type": "boolean"
+      },
+      "confirm": {
+       "default": false,
+       "description": "Muss true sein, damit wirklich geschrieben wird",
+       "title": "Confirm",
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "table",
+      "field_id"
+     ],
+     "title": "FieldUpdateInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "service_info",
+    "description": "Version, Werkzeugliste, Änderungsverlauf und die Zuständigkeit für die drei Secrets (AIRTABLE_PAT, HOOK_SECRET, ALERT_WEBHOOK_URL). Nach jedem Verbinden einmal aufrufen.",
+    "parameters": {
+     "properties": {},
+     "title": "ServiceInfoInput",
+     "type": "object"
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "schedule_sync",
+    "description": "Stellt den Tagesplan auf den aktuellen Sommer-/Winterwert um (Sommerzeit 05:00 UTC, Winterzeit 06:00 UTC = 07:00 Ortszeit). Täglich aufrufen, ist idempotent.",
+    "parameters": {
+     "properties": {
+      "request_id": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": null,
+       "description": "Request-ID des Tageslaufs (nur beim ersten Mal nötig)",
+       "title": "Request Id"
+      },
+      "apply": {
+       "default": true,
+       "description": "false = nur anzeigen, welcher Cron gelten müsste",
+       "title": "Apply",
+       "type": "boolean"
+      }
+     },
+     "title": "ScheduleSyncInput",
+     "type": "object"
+    }
+   }
+  }
+ ]
+}
