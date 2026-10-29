@@ -1,5 +1,11 @@
 # Changelog
 
+## Notion Sync 1.0.0 — 2026-10-29
+
+- Neuer Dienst `Ilvana Notion Sync`: spiegelt die 31 Werkzeugschemata in die Notion-Datenbank
+  „Ilvana Tools" — eine Seite pro Werkzeug, mit Gruppe, Beschreibung, Parametern und Prüfsumme
+- Vorschau-Endpunkt und täglicher Abgleich (`cron(0 4 * * ? *)`); zweiter Lauf: 31 unverändert
+
 ## 1.5.5 — 2026-10-29
 
 - `schedule_sync`: stellt den Tagesplan automatisch auf Sommerzeit (`cron(0 5 * * ? *)`) bzw. Winterzeit
