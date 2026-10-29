@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.5 — 2026-10-29
+
+- `schedule_sync`: stellt den Tagesplan automatisch auf Sommerzeit (`cron(0 5 * * ? *)`) bzw. Winterzeit
+  (`cron(0 6 * * ? *)`) um — idempotent, täglich um 03:00 UTC aufgerufen
+- Zweiter Zeitplan dafür angelegt; Tagesplan bleibt damit ganzjährig bei 07:00 Ortszeit
+- ChatGPT-Hinweis: 31 Operationen überschreiten das Limit von 30 — beim Import eine weglassen
+
 ## 1.5.4 — 2026-10-29
 
 - `POST /automation/daily` nimmt `base` und `mode` als JSON-Body (Query-Parameter erreichen den Dienst über die Runtime nicht)
