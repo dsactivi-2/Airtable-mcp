@@ -1,6 +1,6 @@
 # Skills — Ilvana Airtable
 
-Ein Dienst, 28 Werkzeuge, vier Agenten-Frameworks. Jeder Agent bekommt **eine** Kerndatei und **eine**
+Ein Dienst, 29 Werkzeuge, vier Agenten-Frameworks. Jeder Agent bekommt **eine** Kerndatei und **eine**
 Framework-Datei.
 
 | Framework | Datei | Verbindungsweg |
@@ -16,5 +16,6 @@ Gemeinsame Grundlage für alle: [ilvana-airtable/SKILL.md](ilvana-airtable/SKILL
 - `references/filtering.md` — Suche und Filter mit JSON
 - `references/tags.md` — Tag-System und was Airtable automatisch berechnet
 - `references/automation.md` — Regeln, Tageslauf, Protokoll
+- `references/writing.md` — Anlegen, Ändern, Uploads, Dubletten
 - `references/config-and-hooks.md` — Konfiguration über den Agenten, Hook-Test, Base-Änderungen
 - `references/good-to-have.md` — offene Verbesserungen
