@@ -9,7 +9,10 @@ AUTH="Authorization: Bearer $CODEWORDS_API_KEY"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-post() { curl -s -m 60 -X POST "$BASE/tools/$1" -H "$AUTH" -H 'Content-Type: application/json' -d "${2:-{\}}"; }
+post() {
+  local tool="$1"; local body="$2"; shift 2 2>/dev/null || true
+  curl -s -m 60 -X POST "$BASE/tools/$tool" -H "$AUTH" -H 'Content-Type: application/json' -d "$body" "$@"
+}
 
 # alle Abfragen parallel starten
 curl -s -m 60 -H "$AUTH" "$BASE/health"                                  > "$tmp/health" &
