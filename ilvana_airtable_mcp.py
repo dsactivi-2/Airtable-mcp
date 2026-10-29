@@ -79,8 +79,15 @@ EARLY_STATUSES = {"Zainteresiran", "Zeleni / obrada"}
 TZ = ZoneInfo("Europe/Sarajevo")
 SCHEMA_TTL = 300
 
-SERVICE_VERSION = "1.5.4"
+SERVICE_VERSION = "1.5.5"
 SERVICE_CHANGELOG: list[dict[str, Any]] = [
+    {
+        "version": "1.5.5",
+        "date": "2026-10-29",
+        "changes": [
+            "schedule_sync: stellt den Tagesplan automatisch auf Sommerzeit (05:00 UTC) bzw. Winterzeit (06:00 UTC) um — täglich aufrufbar, idempotent",
+        ],
+    },
     {
         "version": "1.5.4",
         "date": "2026-10-29",
@@ -1798,6 +1805,11 @@ class ServiceInfoInput(BaseModel):
     pass
 
 
+class ScheduleSyncInput(BaseModel):
+    request_id: str | None = Field(default=None, description="Request-ID des Tageslaufs (nur beim ersten Mal nötig)")
+    apply: bool = Field(default=True, description="false = nur anzeigen, welcher Cron gelten müsste")
+
+
 async def tool_service_info(m: ServiceInfoInput) -> dict[str, Any]:
     logger.info("STEPLOG START service_info")
     config = await _config()
@@ -1838,6 +1850,78 @@ async def tool_service_info(m: ServiceInfoInput) -> dict[str, Any]:
     }
 
 
+async def _runtime_call(path: str, body: dict[str, Any], method: str = "POST") -> dict[str, Any]:
+    key = (os.environ.get("CODEWORDS_API_KEY") or "").strip()
+    if not key:
+        raise AirtableError("CODEWORDS_API_KEY fehlt — Zeitpläne sind nicht verwaltbar.", status=500)
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.request(
+            method, f"https://runtime.codewords.ai/run/{path}",
+            headers={"Authorization": f"Bearer {key}"}, json=body,
+        )
+    if response.status_code >= 400:
+        raise AirtableError(f"Runtime-Fehler {response.status_code}: {response.text[:200]}", status=502)
+    return response.json()
+
+
+def _desired_daily_cron() -> tuple[str, bool]:
+    local = datetime.now(TZ)
+    is_dst = bool(local.dst())
+    return ("cron(0 5 * * ? *)" if is_dst else "cron(0 6 * * ? *)"), is_dst
+
+
+async def tool_schedule_sync(m: ScheduleSyncInput) -> dict[str, Any]:
+    logger.info("STEPLOG START schedule_sync")
+    desired, is_dst = _desired_daily_cron()
+    config = await _config()
+    request_id = m.request_id or config.get("daily_request_id")
+
+    payload = await _runtime_call("schedule_runs/list", {})
+    schedules = payload.get("schedules") or (payload.get("output") or {}).get("schedules") or []
+    ours = [s for s in schedules if s.get("serviceName") == "Ilvana Airtable MCP"]
+    daily = [
+        s for s in ours
+        if str(s.get("scheduleExpression", "")).startswith(("cron(0 5 ", "cron(0 6 ", "cron(0 7 "))
+    ]
+    current = daily[0].get("scheduleExpression") if daily else None
+    result: dict[str, Any] = {
+        "dst_active": is_dst,
+        "desired": desired,
+        "current": current,
+        "changed": False,
+    }
+
+    if not daily:
+        result["note"] = "Kein Tagesplan gefunden — einmalig mit request_id anlegen."
+        return result
+    if current == desired and len(daily) == 1:
+        result["note"] = "Zeitplan ist bereits korrekt, nichts geändert."
+        return result
+    if not m.apply:
+        result["note"] = "Nur Vorschau — es wurde nichts umgestellt."
+        return result
+    if not request_id:
+        raise AirtableError(
+            "daily_request_id unbekannt. Einmalig request_id des Tageslaufs übergeben.", status=409
+        )
+
+    created = await _runtime_call("schedule_runs/create", {
+        "request_id": request_id, "schedule_expression": desired,
+    })
+    new_id = created.get("schedule_id")
+    removed = []
+    for entry in daily:
+        if entry.get("id") == new_id:
+            continue
+        await _runtime_call("schedule_runs/delete", {"schedule_id": entry.get("id")})
+        removed.append(entry.get("id"))
+    await _config_save({"daily_request_id": request_id, "daily_schedule_id": new_id})
+    result.update({"changed": True, "new_schedule_id": new_id, "removed": removed,
+                   "note": "Zeitplan auf den aktuellen Sommer-/Winterwert umgestellt."})
+    logger.info("Daily schedule synced", desired=desired, is_dst=is_dst)
+    return result
+
+
 MODELS: dict[str, Any] = {
     "schema_get": SchemaGetInput,
     "candidates_search": CandidatesSearchInput,
@@ -1869,6 +1953,7 @@ MODELS: dict[str, Any] = {
     "field_create": FieldCreateInput,
     "field_update": FieldUpdateInput,
     "service_info": ServiceInfoInput,
+    "schedule_sync": ScheduleSyncInput,
 }
 
 IMPL: dict[str, Any] = {
@@ -1902,6 +1987,7 @@ IMPL: dict[str, Any] = {
     "field_create": tool_field_create,
     "field_update": tool_field_update,
     "service_info": tool_service_info,
+    "schedule_sync": tool_schedule_sync,
 }
 
 TOOL_DOCS: dict[str, str] = {
@@ -1935,6 +2021,7 @@ TOOL_DOCS: dict[str, str] = {
     "field_create": "Neues Feld in einer Tabelle anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
     "field_update": "Feld umbenennen oder Auswahlwerte ändern (Vorschau zuerst, echte Änderung nur mit confirm).",
     "service_info": "Version, Werkzeugliste, Änderungsverlauf und die Zuständigkeit für die drei Secrets (AIRTABLE_PAT, HOOK_SECRET, ALERT_WEBHOOK_URL). Nach jedem Verbinden einmal aufrufen.",
+    "schedule_sync": "Stellt den Tagesplan auf den aktuellen Sommer-/Winterwert um (Sommerzeit 05:00 UTC, Winterzeit 06:00 UTC = 07:00 Ortszeit). Täglich aufrufen, ist idempotent.",
 }
 
 
@@ -2379,6 +2466,15 @@ async def field_update(
 async def service_info() -> dict[str, Any]:
     """Version, Änderungen und Secret-Zuständigkeiten — beim Verbinden einmal aufrufen."""
     return await _mcp("service_info", {})
+
+
+@fast_app.tool()
+async def schedule_sync(
+    request_id: Annotated[str | None, Field(description="Request-ID des Tageslaufs, nur beim ersten Mal")] = None,
+    apply: Annotated[bool, Field(description="false = nur anzeigen")] = True,
+) -> dict[str, Any]:
+    """Tagesplan auf Sommer-/Winterzeit umstellen (idempotent)."""
+    return await _mcp("schedule_sync", {"request_id": request_id, "apply": apply})
 
 
 # ---------------------------------------------------------------- FastAPI app
