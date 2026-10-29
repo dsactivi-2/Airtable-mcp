@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 
 import httpx
-from codewords_client import logger, run_service
+from codewords_client import logger, redis_client, run_service
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -39,6 +39,7 @@ from pydantic import BaseModel, Field
 ILVANA_BASE = "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7"
 NOTION_VERSION = "2022-06-28"
 DB_TITLE = "Ilvana Tools"
+STALE_HOURS = 26
 
 GROUPS: dict[str, str] = {}
 for _name in ("schema_get", "candidates_search", "applications_search", "candidate_dossier",
@@ -225,6 +226,58 @@ class SyncRequest(BaseModel):
     dry_run: bool = Field(default=False, description="true = nur Vorschau, Notion bleibt unverändert")
 
 
+async def _store_heartbeat(payload: dict[str, Any]) -> None:
+    try:
+        async with redis_client() as (redis, ns):
+            await redis.set(f"{ns}:last_run", json.dumps(payload, ensure_ascii=False))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Heartbeat nicht speicherbar", error=str(exc))
+
+
+async def _read_heartbeat() -> dict[str, Any]:
+    try:
+        async with redis_client() as (redis, ns):
+            raw = await redis.get(f"{ns}:last_run")
+        return json.loads(raw) if raw else {}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Heartbeat nicht lesbar", error=str(exc))
+        return {}
+
+
+async def _alert(kind: str, message: str, details: dict[str, Any] | None = None) -> bool:
+    url = (os.environ.get("ALERT_WEBHOOK_URL") or "").strip()
+    entry = {
+        "service": "ilvana-notion-sync",
+        "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "kind": kind,
+        "message": message,
+        "details": details or {},
+    }
+    if not url:
+        logger.info("Alarm ohne Webhook gespeichert", kind=kind)
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(url, json=entry)
+        return 200 <= response.status_code < 300
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Alarm nicht zustellbar", error=str(exc))
+        return False
+
+
+class CheckRequest(BaseModel):
+    notify: bool = Field(default=True, description="false = nur prüfen, keinen Alarm senden")
+
+
+class CheckResult(BaseModel):
+    healthy: bool = Field(description="true = letzter Lauf erfolgreich und nicht zu alt")
+    stale: bool = Field(description="true = letzter Lauf liegt länger als 26 Stunden zurück")
+    last_run: str | None = Field(default=None, description="Zeitpunkt des letzten Laufs (UTC)")
+    last_ok: bool = Field(default=False, description="Ergebnis des letzten Laufs")
+    detail: str = Field(default="", description="Kurzbeschreibung des letzten Laufs")
+    alerted: bool = Field(default=False, description="true = Alarm wurde ausgelöst")
+
+
 class SyncResult(BaseModel):
     success: bool = Field(description="true bei erfolgreichem Lauf")
     dry_run: bool = Field(description="true = Vorschau, Notion wurde nicht verändert")
@@ -279,6 +332,16 @@ async def run_sync(dry_run: bool) -> SyncResult:
         updated += 1
 
     logger.info("Notion sync finished", created=created, updated=updated, unchanged=unchanged)
+    await _store_heartbeat({
+        "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "ok": True,
+        "total": len(tools),
+        "created": created,
+        "updated": updated,
+        "unchanged": unchanged,
+        "version": version,
+        "note": f"{created} neu, {updated} aktualisiert, {unchanged} unverändert.",
+    })
     return SyncResult(
         success=True, dry_run=False, version=version, database_id=database_id, database_created=created_db,
         total=len(tools), created=created, updated=updated, unchanged=unchanged,
@@ -297,12 +360,49 @@ app = FastAPI(
 @app.exception_handler(NotionError)
 async def notion_error_handler(request: Request, exc: NotionError) -> JSONResponse:
     logger.warning("Notion sync error", path=str(request.url), message=exc.message)
+    await _store_heartbeat({
+        "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "ok": False,
+        "note": exc.message,
+    })
+    await _alert("notion_sync_failed", exc.message, {"path": str(request.url), "status": exc.status})
     return JSONResponse(status_code=exc.status, content={"success": False, "error": exc.message})
 
 
 @app.get("/health")
 async def health() -> dict[str, Any]:
     return {"status": "ok", "service": "ilvana-notion-sync", "source": ILVANA_BASE, "database": DB_TITLE}
+
+
+@app.get("/status")
+async def status() -> dict[str, Any]:
+    heartbeat = await _read_heartbeat()
+    return {"service": "ilvana-notion-sync", "last_run": heartbeat, "stale_hours": STALE_HOURS}
+
+
+@app.post("/check", response_model=CheckResult)
+async def check(payload: CheckRequest) -> CheckResult:
+    heartbeat = await _read_heartbeat()
+    last_run = heartbeat.get("at")
+    last_ok = bool(heartbeat.get("ok"))
+    stale = True
+    if last_run:
+        try:
+            stamp = datetime.fromisoformat(last_run)
+            stale = (datetime.now(timezone.utc) - stamp).total_seconds() > STALE_HOURS * 3600
+        except Exception:  # noqa: BLE001
+            stale = True
+    healthy = last_ok and not stale
+    alerted = False
+    if not healthy and payload.notify:
+        if stale:
+            message = f"Notion-Sync seit über {STALE_HOURS} Stunden nicht gelaufen (letzter Lauf: {last_run or 'nie'})"
+            alerted = await _alert("notion_sync_stale", message, {"last_run": last_run})
+        else:
+            message = f"Notion-Sync fehlgeschlagen: {heartbeat.get('note', 'unbekannt')}"
+            alerted = await _alert("notion_sync_failed", message, {"last_run": last_run})
+    return CheckResult(healthy=healthy, stale=stale, last_run=last_run, last_ok=last_ok,
+                       detail=str(heartbeat.get("note", "")), alerted=alerted)
 
 
 @app.post("/preview", response_model=SyncResult)
