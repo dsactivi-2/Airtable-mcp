@@ -79,8 +79,15 @@ EARLY_STATUSES = {"Zainteresiran", "Zeleni / obrada"}
 TZ = ZoneInfo("Europe/Sarajevo")
 SCHEMA_TTL = 300
 
-SERVICE_VERSION = "1.5.3"
+SERVICE_VERSION = "1.5.4"
 SERVICE_CHANGELOG: list[dict[str, Any]] = [
+    {
+        "version": "1.5.4",
+        "date": "2026-10-29",
+        "changes": [
+            "POST /automation/daily nimmt base und mode als JSON-Body (Query-Parameter kommen über die Runtime nicht an)",
+        ],
+    },
     {
         "version": "1.5.3",
         "date": "2026-10-29",
@@ -730,6 +737,11 @@ class AutomationRunInput(BaseModel):
 
 class AutomationLogInput(BaseModel):
     limit: int = Field(default=25, ge=1, le=200, description="Anzahl Einträge")
+
+
+class DailyRunRequest(BaseModel):
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
+    mode: Literal["preview", "apply"] = Field(default="preview", description="preview = nur zeigen, apply = schreiben")
 
 
 class RootRequest(BaseModel):
@@ -2512,7 +2524,9 @@ def create_fastapi_app() -> FastAPI:
         return JSONResponse(content={"base": base, "markdown": "\n".join(lines)})
 
     @app.post("/automation/daily")
-    async def automation_daily(base: str = "kopieren", mode: str = "preview") -> JSONResponse:
+    async def automation_daily(payload: DailyRunRequest | None = None) -> JSONResponse:
+        base = payload.base if payload else "kopieren"
+        mode = payload.mode if payload else "preview"
         report = await run_tool("due_report", {"base": base, "days_ahead": 7})
         run = await run_tool("automation_run", {"mode": mode, "base": base, "limit": 500})
         health = await run_tool("data_health", {"base": base, "notify": True, "limit": 20})
