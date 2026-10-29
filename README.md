@@ -36,7 +36,7 @@ Tagesbericht und Folgeaufgaben bei Statuswechsel.
 | GET | `/schema/tools` | Function-Calling-Definitionen (OpenAI-Format) |
 | GET | `/schema` | Schema als JSON |
 | GET | `/schema/document` | Schema als Markdown |
-| POST | `/automation/daily` | Tagesbericht und Automatik, Standard nur Vorschau |
+| POST | `/automation/daily` | Tagesbericht und Automatik; Body `{"mode":"apply"}` schreibt, `preview` zeigt nur |
 | GET | `/health` | Status |
 | - | `/mcp/` | MCP (Streamable HTTP) fuer KI-Clients |
 
@@ -71,7 +71,7 @@ Fehlt eine Base im Token, antwortet der Dienst mit einer klaren Fehlermeldung st
 
 ## Betrieb
 
-Der Dienst laeuft als CodeWords-Service (FastAPI + FastMCP). Der Tageslauf ist als Vorschau registriert (taeglich 07:00 Europe/Sarajevo). Umschalten auf echtes Schreiben: mode=apply.
+Der Dienst laeuft als CodeWords-Service (FastAPI + FastMCP). Der Tageslauf ist aktiv (apply, taeglich 07:00 UTC = 08:00 Sarajevo). Umschalten auf echtes Schreiben: mode=apply.
 
 ## Schema
 
