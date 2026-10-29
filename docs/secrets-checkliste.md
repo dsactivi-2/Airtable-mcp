@@ -116,6 +116,33 @@ curl -i -X POST "<DEINE_URL>" -H 'Content-Type: application/json' \
 
 `200` → passt. Alles andere → Adresse oder Methode prüfen.
 
+
+### Nicht als Empfänger geeignet
+
+| Was | Warum nicht |
+|---|---|
+| E-Mail-Postfach | kann kein `POST` empfangen — erst der Empfänger schickt die Mail |
+| WhatsApp / Viber direkt | kein eingehender Webhook ohne eigenen Bot/Provider |
+| Airtable | empfängt keine eingehenden Webhooks |
+| CodeWords-Runtime (`…/run/…`) | verlangt Bearer-Key → 401 |
+| lokaler Rechner ohne Tunnel | nicht öffentlich erreichbar |
+
+### Hookdeck: Source ist der Eintrag, Destination das Ziel
+
+```
+Dienst → Hookdeck Source-URL → Hookdeck (Retry, Filter) → dein Ziel
+```
+
+- In `ALERT_WEBHOOK_URL` gehört die **Source-URL** von Hookdeck.
+- Die **Destination-URL** ist dein eigener Empfänger (n8n, Make, Server).
+- Auf der Source **keine** Verification/Auth aktivieren — der Dienst sendet keinen Auth-Header.
+  Braucht dein Ziel Auth, setzt Hookdeck ihn in der Destination-Konfiguration.
+
+### Zeitverhalten
+
+Der Dienst wartet **15 Sekunden** auf Antwort. Alles außer `2xx` landet als
+`delivered: false` mit `delivery_error` in `alerts_list`; gespeichert wird der Alarm trotzdem.
+
 ### Wo die Adresse herkommt
 
 | Empfänger | Fundort |
