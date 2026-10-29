@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ilvana Airtable MCP",
-    "version": "1.5.6",
+    "version": "1.5.7",
     "description": "Kandidaten-CRM der Ilvana i Hase: Suche, Akte, Anlegen, Ändern, Uploads, Automatik, Protokoll, Alarme, Konfiguration, Base-Änderungen."
   },
   "servers": [
@@ -21,6 +21,102 @@
         "type": "http",
         "scheme": "bearer",
         "description": "CodeWords API Key"
+      }
+    },
+    "schemas": {
+      "RootRequest": {
+        "properties": {
+          "tool": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional: Werkzeugname für Direktaufruf",
+            "title": "Tool"
+          },
+          "arguments": {
+            "additionalProperties": true,
+            "description": "Argumente für das Werkzeug",
+            "title": "Arguments",
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "RootResponse": {
+        "properties": {
+          "success": {
+            "default": true,
+            "description": "Immer true",
+            "title": "Success",
+            "type": "boolean"
+          },
+          "service": {
+            "default": "Ilvana Airtable MCP",
+            "description": "Dienstname",
+            "title": "Service",
+            "type": "string"
+          },
+          "tools": {
+            "description": "Verfügbare Werkzeuge",
+            "items": {
+              "type": "string"
+            },
+            "title": "Tools",
+            "type": "array"
+          },
+          "usage": {
+            "default": "",
+            "description": "Kurzanleitung",
+            "title": "Usage",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Ergebnis bei Direktaufruf",
+            "title": "Result"
+          }
+        },
+        "type": "object"
+      },
+      "DailyRunRequest": {
+        "properties": {
+          "base": {
+            "default": "kopieren",
+            "description": "Base: kopieren (Standard) oder original",
+            "enum": [
+              "kopieren",
+              "original"
+            ],
+            "title": "Base",
+            "type": "string"
+          },
+          "mode": {
+            "default": "preview",
+            "description": "preview = nur zeigen, apply = schreiben",
+            "enum": [
+              "preview",
+              "apply"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "type": "object"
       }
     }
   },
@@ -1994,6 +2090,56 @@
         "responses": {
           "200": {
             "description": "status, version, tools"
+          }
+        }
+      }
+    },
+    "/": {
+      "post": {
+        "operationId": "run",
+        "summary": "Dienstinfo abrufen oder ein Werkzeug direkt ausführen",
+        "description": "Ohne tool liefert der Aufruf Dienstname, Version und Werkzeugliste. Mit tool und arguments wird das jeweilige Werkzeug ausgeführt.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RootRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dienstinfo oder Ergebnis des Werkzeugs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RootResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automation/daily": {
+      "post": {
+        "operationId": "automation_daily",
+        "summary": "Tagesbericht, Automatik und Datenqualität in einem Lauf",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DailyRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "report, automation und health"
           }
         }
       }
