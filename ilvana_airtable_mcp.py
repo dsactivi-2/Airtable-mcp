@@ -82,6 +82,7 @@ _schema_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 _ACTOR: ContextVar[str] = ContextVar("actor", default="api")
 
 WRITE_TOOLS = {
+    "application_create",
     "application_update",
     "applications_bulk_update",
     "application_add_note",
@@ -580,6 +581,13 @@ class ApplicationUpdateInput(BaseModel):
     note: str | None = Field(default=None, description="Optionaler Protokoll-Eintrag")
 
 
+class ApplicationCreateInput(BaseModel):
+    fields: dict[str, Any] = Field(..., description="Felder des neuen Datensatzes; 'Ime i prezime' ist Pflicht")
+    note: str | None = Field(default=None, description="Optionaler Startvermerk in 'Bilješka'")
+    allow_duplicate: bool = Field(default=False, description="true = trotz gleicher Telefonnummer anlegen")
+    base: BaseName = Field(default="kopieren", description="Base: kopieren (Standard) oder original")
+
+
 class BulkUpdateInput(BaseModel):
     fields: dict[str, Any] = Field(..., description="Zu setzende Felder für alle Treffer")
     record_ids: list[str] | None = Field(default=None, description="Explizite Datensatz-IDs")
@@ -995,6 +1003,39 @@ async def tool_due_report(m: DueReportInput) -> dict[str, Any]:
         "upcoming_appointments": appointments,
         "missing_documents": missing,
         "report_text": "\n".join(lines),
+    }
+
+
+async def tool_application_create(m: ApplicationCreateInput) -> dict[str, Any]:
+    logger.info("STEPLOG START application_create")
+    fields_by_name = await _table_fields(m.base, "prijave")
+    cleaned = _validate_fields(fields_by_name, m.fields, "Prijave (test)")
+    name = str(cleaned.get("Ime i prezime") or "").strip()
+    if not name:
+        raise AirtableError("'Ime i prezime' ist Pflicht — ohne Namen wird nichts angelegt.")
+    phone = f"{cleaned.get('Pozivni broj') or ''}{cleaned.get('Broj telefona') or ''}"
+    if phone.strip() and not m.allow_duplicate:
+        for record in await _fetch_records(m.base, "prijave", max_records=3000):
+            existing = record.get("fields") or {}
+            existing_phone = f"{existing.get('Pozivni broj') or ''}{existing.get('Broj telefona') or ''}"
+            if _phone_match(phone, existing_phone):
+                raise AirtableError(
+                    "Es gibt bereits einen Datensatz mit dieser Nummer: "
+                    f"{_candidate_name(existing) or record['id']} ({record['id']}). "
+                    "Mit allow_duplicate=true trotzdem anlegen oder den bestehenden Datensatz ändern.",
+                    status=409,
+                )
+    if m.note:
+        cleaned["Bilješka"] = f"[{_now_iso()} {_ACTOR.get()}] {m.note}"
+    created = await _create_records(m.base, "prijave", [cleaned])
+    record = created[0] if created else {"id": None, "fields": {}}
+    logger.info("Application created", base=m.base, record_id=record.get("id"))
+    return {
+        "success": True,
+        "base": m.base,
+        "record_id": record.get("id"),
+        "created_fields": cleaned,
+        "summary": _brief({**(record.get("fields") or {}), "_record_id": record.get("id")}),
     }
 
 
@@ -1673,6 +1714,7 @@ MODELS: dict[str, Any] = {
     "pipeline_summary": PipelineSummaryInput,
     "due_report": DueReportInput,
     "application_update": ApplicationUpdateInput,
+    "application_create": ApplicationCreateInput,
     "applications_bulk_update": BulkUpdateInput,
     "application_add_note": AddNoteInput,
     "casting_rating_upsert": CastingRatingInput,
@@ -1704,6 +1746,7 @@ IMPL: dict[str, Any] = {
     "pipeline_summary": tool_pipeline_summary,
     "due_report": tool_due_report,
     "application_update": tool_application_update,
+    "application_create": tool_application_create,
     "applications_bulk_update": tool_bulk_update,
     "application_add_note": tool_add_note,
     "casting_rating_upsert": tool_casting_rating_upsert,
@@ -1735,6 +1778,7 @@ TOOL_DOCS: dict[str, str] = {
     "pipeline_summary": "Übersicht: Anzahl je Status, überfällige Aktionen, fehlende Unterlagen, Termine der nächsten 7 Tage.",
     "due_report": "Tagesbericht: fällige und überfällige Aktionen, Casting- und Visumtermine, fehlende Unterlagen.",
     "application_update": "Freigegebene Felder einer Bewerbung setzen; optional mit Protokoll-Notiz.",
+    "application_create": "Neue Bewerbung anlegen (mindestens 'Ime i prezime'); prüft vorher auf gleiche Telefonnummer und legt nur mit allow_duplicate=true trotzdem an.",
     "applications_bulk_update": "Mehrere Kandidaten gleichzeitig ändern — standardmäßig nur Vorschau, Schreiben erst mit dry_run=false und confirm=true, maximal 50 Datensätze.",
     "application_add_note": "Notiz mit Zeitstempel und Verfasser anhängen (bestehende Notizen bleiben erhalten).",
     "casting_rating_upsert": "Casting-Bewertung anlegen oder aktualisieren, inklusive Verknüpfung zum Kandidaten.",
@@ -1933,6 +1977,18 @@ async def due_report(
 ) -> dict[str, Any]:
     """Tagesbericht mit fälligen Aktionen, Terminen und fehlenden Unterlagen."""
     return await _mcp("due_report", {"base": base, "days_ahead": days_ahead})
+
+
+@fast_app.tool()
+async def application_create(
+    fields: Annotated[dict[str, Any], Field(description="Felder des neuen Datensatzes, mindestens 'Ime i prezime'")],
+    note: Annotated[str | None, Field(description="Optionaler Startvermerk")] = None,
+    allow_duplicate: Annotated[bool, Field(description="Trotz gleicher Telefonnummer anlegen")] = False,
+    base: Annotated[str, Field(description="kopieren oder original")] = "kopieren",
+) -> dict[str, Any]:
+    """Neue Bewerbung anlegen."""
+    return await _mcp("application_create", {"fields": fields, "note": note,
+                                            "allow_duplicate": allow_duplicate, "base": base})
 
 
 @fast_app.tool()
