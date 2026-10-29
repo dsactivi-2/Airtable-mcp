@@ -259,3 +259,51 @@ Ohne diesen Header protokolliert der Dienst die Aufrufer-ID der Plattform.
 | `Ungültiges Hook-Secret` | `X-Hook-Secret` fehlt oder weicht von `HOOK_SECRET` ab |
 | `Nicht schreibbare Felder …` | Formel/Verknüpfung/Anhang angesprochen — erlaubte Felder stehen in der Meldung |
 | Alarme kommen nicht an | `ALERT_WEBHOOK_URL` leer → nur gespeichert; `alerts_list` zeigt `webhook_configured` |
+
+---
+
+## 11. Hook testen, Konfiguration ändern, Base erweitern
+
+Alles drei geht **über den Agenten** — kein Panel, kein Redeploy.
+
+### Hook testen (schreibt nichts)
+
+```json
+POST /tools/hook_test {"record_id": "rec…"}
+```
+
+Antwort: Hook-URL, benötigte Header, Beispiel-Body, fertiger `curl`, Warnung falls kein Secret gesetzt
+ist, und `would_do` — was ein echter Aufruf auslösen würde. Erst danach die Airtable-Automation scharf
+schalten.
+
+### Konfiguration über den Agenten
+
+```json
+POST /tools/config_get {}
+POST /tools/config_set {"alert_webhook_url": "https://<deine-plattform>/incoming/abc"}
+POST /tools/config_set {"hook_secret": "<16+ Zeichen, z.B. openssl rand -hex 32>"}
+POST /tools/config_set {"default_base": "original"}
+POST /tools/config_set {"clear": ["alert_webhook_url"]}
+```
+
+Werte greifen sofort. Secrets werden nur als `gesetzt: true/false` zurückgegeben.
+`AIRTABLE_PAT` bleibt bewusst außen vor — nur im Platform-Panel änderbar.
+
+### Base-Struktur erweitern
+
+```json
+POST /tools/field_create {"table": "prijave", "name": "Rückruf notiert",
+  "type": "singleSelect", "options": {"choices": [{"name": "ja"}, {"name": "nein"}]}}
+
+POST /tools/table_create {"name": "Prüfliste",
+  "fields": [{"name": "Name", "type": "singleLineText"}, {"name": "Datum", "type": "date"}]}
+
+POST /tools/field_update {"table": "prijave", "field_id": "fld…",
+  "options": {"choices": [{"name": "Offen"}, {"name": "Erledigt"}]}}
+```
+
+Standard ist **Vorschau** (`preview=true`): der Dienst zeigt Methode, URL und Payload, sendet aber nichts.
+Echt wird es nur mit `preview=false` **und** `confirm=true`.
+
+Voraussetzung: der Airtable-Schlüssel braucht zusätzlich **`schema.bases:write`**. Kein Löschen von
+Tabellen oder Feldern, kein Umbau von Feldtypen.
