@@ -156,8 +156,35 @@ async def _append_log(key: str, entry: dict[str, Any], cap: int = 1000) -> None:
         logger.warning("Log write failed", key=key, error=str(exc))
 
 
+async def _config() -> dict[str, Any]:
+    """Runtime configuration stored in Redis (overrides environment variables)."""
+    try:
+        async with redis_client() as (redis, ns):
+            raw = await redis.get(f"{ns}:config")
+        if raw:
+            data = json.loads(raw)
+            return data if isinstance(data, dict) else {}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Config read failed", error=str(exc))
+    return {}
+
+
+async def _config_save(values: dict[str, Any]) -> dict[str, Any]:
+    current = await _config()
+    current.update(values)
+    current = {k: v for k, v in current.items() if v is not None}
+    async with redis_client() as (redis, ns):
+        await redis.set(f"{ns}:config", json.dumps(current, ensure_ascii=False))
+    return current
+
+
+async def _effective(key: str, env_name: str | None = None) -> str:
+    config = await _config()
+    return str(config.get(key) or os.environ.get(env_name or key.upper(), "") or "").strip()
+
+
 async def _push_alert(kind: str, message: str, details: dict[str, Any] | None = None) -> bool:
-    """Store an alert and push it to ALERT_WEBHOOK_URL when configured."""
+    """Store an alert and push it to the configured alert webhook."""
     entry = {
         "at": _now_iso(),
         "kind": kind,
@@ -166,7 +193,7 @@ async def _push_alert(kind: str, message: str, details: dict[str, Any] | None = 
         "actor": _ACTOR.get(),
     }
     await _append_log("alerts", entry, 500)
-    url = (os.environ.get("ALERT_WEBHOOK_URL") or "").strip()
+    url = await _effective("alert_webhook_url")
     if not url:
         logger.info("Alert stored (no webhook configured)", kind=kind)
         return False
@@ -1332,6 +1359,52 @@ class AirtableHookRequest(BaseModel):
     event: str | None = Field(default=None, description="Freitext, z.B. Airtable-Automation-Name")
 
 
+class HookTestInput(BaseModel):
+    record_id: str | None = Field(default=None, description="Datensatz für den Test (optional)")
+    base: BaseName = Field(default="kopieren")
+
+
+class ConfigGetInput(BaseModel):
+    pass
+
+
+class ConfigSetInput(BaseModel):
+    alert_webhook_url: str | None = Field(default=None, description="HTTPS-Adresse für Alarme")
+    hook_secret: str | None = Field(default=None, description="Gemeinsames Passwort für /hooks/airtable")
+    default_base: BaseName | None = Field(default=None, description="Base, wenn ein Aufruf keine nennt")
+    clear: list[str] | None = Field(default=None, description="Schlüssel entfernen, z.B. ['alert_webhook_url']")
+
+
+class TableCreateInput(BaseModel):
+    name: str = Field(..., min_length=1, max_length=80, description="Name der neuen Tabelle")
+    fields: list[dict[str, Any]] = Field(..., description="Felder: [{\"name\": \"Name\", \"type\": \"singleLineText\"}]")
+    description: str | None = Field(default=None)
+    base: BaseName = Field(default="kopieren")
+    preview: bool = Field(default=True, description="true = nur zeigen, was gesendet würde")
+    confirm: bool = Field(default=False, description="Muss true sein, damit die Tabelle entsteht")
+
+
+class FieldCreateInput(BaseModel):
+    table: str = Field(..., description="Tabellenname oder Schlüssel (prijave, casting, tasks)")
+    name: str = Field(..., min_length=1, max_length=80, description="Feldname")
+    type: str = Field(..., description="Airtable-Feldtyp, z.B. singleLineText, singleSelect, date, number")
+    options: dict[str, Any] | None = Field(default=None, description="Optionen, z.B. choices für singleSelect")
+    base: BaseName = Field(default="kopieren")
+    preview: bool = Field(default=True)
+    confirm: bool = Field(default=False)
+
+
+class FieldUpdateInput(BaseModel):
+    table: str = Field(..., description="Tabellenname oder Schlüssel")
+    field_id: str = Field(..., description="Feld-ID fld…")
+    name: str | None = Field(default=None, description="Neuer Name")
+    options: dict[str, Any] | None = Field(default=None, description="Neue Optionen (z.B. choices)")
+    base: BaseName = Field(default="kopieren")
+    preview: bool = Field(default=True)
+    confirm: bool = Field(default=False)
+
+
+
 async def _read_log(key: str, read: int = 500) -> list[dict[str, Any]]:
     async with redis_client() as (redis, ns):
         raw = await redis.lrange(f"{ns}:{key}", 0, read - 1)
@@ -1368,7 +1441,7 @@ async def tool_alerts_list(m: AlertsInput) -> dict[str, Any]:
     return {
         "count": len(entries[: m.limit]),
         "total": len(entries),
-        "webhook_configured": bool((os.environ.get("ALERT_WEBHOOK_URL") or "").strip()),
+        "webhook_configured": bool(await _effective("alert_webhook_url")),
         "entries": entries[: m.limit],
     }
 
@@ -1429,6 +1502,166 @@ async def tool_data_health(m: DataHealthInput) -> dict[str, Any]:
     }
 
 
+async def _resolve_table_id(base: str, ref: str) -> str:
+    if ref in TABLE_NAMES:
+        return await _table_id(base, ref)
+    for table in await _base_schema(base):
+        if table.get("name") == ref or table.get("id") == ref:
+            return table["id"]
+    raise AirtableError(f"Tabelle '{ref}' wurde in der Base nicht gefunden.", status=404)
+
+
+async def tool_hook_test(m: HookTestInput) -> dict[str, Any]:
+    logger.info("STEPLOG START hook_test")
+    secret_set = bool(await _effective("hook_secret"))
+    record_id = m.record_id
+    if not record_id:
+        records = await _fetch_records(m.base, "prijave", max_records=1)
+        record_id = records[0]["id"] if records else None
+    preview = await tool_automation_run(
+        AutomationRunInput(mode="preview", base=m.base, record_ids=[record_id] if record_id else None, limit=300)
+    )
+    hook_url = "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/hooks/airtable"
+    body = {"record_id": record_id or "rec...", "mode": "preview", "event": "Verbindungstest"}
+    curl = (
+        f"curl -X POST {hook_url} -H 'Content-Type: application/json' "
+        + ("-H 'X-Hook-Secret: <dein HOOK_SECRET>' " if secret_set else "")
+        + f"-H 'Authorization: Bearer <CODEWORDS_API_KEY>' -d '{json.dumps(body)}'"
+    )
+    return {
+        "ok": True,
+        "hook_url": hook_url,
+        "secret_configured": secret_set,
+        "warning": None
+        if secret_set
+        else "HOOK_SECRET ist nicht gesetzt — /hooks/airtable ist offen und kann von jedem aufgerufen werden.",
+        "headers": {
+            "Content-Type": "application/json",
+            "X-Hook-Secret": "<HOOK_SECRET>" if secret_set else "(nicht gesetzt)",
+            "Authorization": "Bearer <CODEWORDS_API_KEY>",
+        },
+        "sample_body": body,
+        "curl": curl,
+        "would_do": preview,
+        "note": "Vorschau — es wurde nichts geschrieben.",
+    }
+
+
+async def tool_config_get(m: ConfigGetInput) -> dict[str, Any]:
+    logger.info("STEPLOG START config_get")
+    config = await _config()
+    webhook = await _effective("alert_webhook_url")
+    secret = await _effective("hook_secret")
+    return {
+        "default_base": config.get("default_base") or "kopieren",
+        "alert_webhook_url": (webhook[:24] + "…") if webhook else None,
+        "alert_webhook_configured": bool(webhook),
+        "hook_secret_configured": bool(secret),
+        "overrides_in_use": sorted(config.keys()),
+        "stored_example_env": {
+            "AIRTABLE_PAT": "nur per Platform-Panel, nicht über dieses Werkzeug änderbar",
+            "ALERT_WEBHOOK_URL": "kann hier gesetzt werden (config_set)",
+            "HOOK_SECRET": "kann hier gesetzt werden (config_set)",
+        },
+    }
+
+
+async def tool_config_set(m: ConfigSetInput) -> dict[str, Any]:
+    logger.info("STEPLOG START config_set")
+    if m.alert_webhook_url and not m.alert_webhook_url.lower().startswith("https://"):
+        raise AirtableError("alert_webhook_url muss mit https:// beginnen.")
+    if m.hook_secret is not None and 0 < len(m.hook_secret) < 16:
+        raise AirtableError("hook_secret muss mindestens 16 Zeichen haben (z.B. openssl rand -hex 32).")
+    changes: dict[str, Any] = {
+        "alert_webhook_url": m.alert_webhook_url,
+        "hook_secret": m.hook_secret,
+        "default_base": m.default_base,
+    }
+    for key in m.clear or []:
+        if key not in {"alert_webhook_url", "hook_secret", "default_base"}:
+            raise AirtableError(f"Unbekannter Schlüssel '{key}'. Erlaubt: alert_webhook_url, hook_secret, default_base")
+        changes[key] = ""
+    updated = await _config_save(changes)
+    await _append_log(
+        "audit",
+        {
+            "at": _now_iso(),
+            "tool": "config_set",
+            "actor": _ACTOR.get(),
+            "record_ids": [],
+            "fields": [k for k, v in changes.items() if v is not None],
+            "summary": "Konfiguration geändert",
+        },
+        2000,
+    )
+    return {
+        "success": True,
+        "overrides_in_use": sorted(updated.keys()),
+        "alert_webhook_configured": bool((updated.get("alert_webhook_url") or "").strip()),
+        "hook_secret_configured": bool((updated.get("hook_secret") or "").strip()),
+        "default_base": updated.get("default_base") or "kopieren",
+        "note": "Änderungen gelten sofort, kein Redeploy nötig.",
+    }
+
+
+async def tool_table_create(m: TableCreateInput) -> dict[str, Any]:
+    logger.info("STEPLOG START table_create")
+    if not m.fields:
+        raise AirtableError("Mindestens ein Feld angeben (Airtable verlangt ein Primärfeld).")
+    base_id = _base_id(m.base)
+    payload: dict[str, Any] = {"name": m.name, "fields": m.fields}
+    if m.description:
+        payload["description"] = m.description
+    url = f"https://api.airtable.com/v0/meta/bases/{base_id}/tables"
+    if m.preview or not m.confirm:
+        return {
+            "preview": True,
+            "method": "POST",
+            "url": url,
+            "payload": payload,
+            "note": "Nichts gesendet. Zum Anlegen preview=false und confirm=true setzen.",
+        }
+    result = await _at_request("POST", url, json=payload)
+    _schema_cache.pop(base_id, None)
+    return {"success": True, "table": result}
+
+
+async def tool_field_create(m: FieldCreateInput) -> dict[str, Any]:
+    logger.info("STEPLOG START field_create")
+    base_id = _base_id(m.base)
+    table_id = await _resolve_table_id(m.base, m.table)
+    payload: dict[str, Any] = {"name": m.name, "type": m.type}
+    if m.options:
+        payload.update(m.options)
+    url = f"https://api.airtable.com/v0/meta/bases/{base_id}/tables/{table_id}/fields"
+    if m.preview or not m.confirm:
+        return {"preview": True, "method": "POST", "url": url, "payload": payload,
+                "note": "Nichts gesendet. Zum Anlegen preview=false und confirm=true setzen."}
+    result = await _at_request("POST", url, json=payload)
+    _schema_cache.pop(base_id, None)
+    return {"success": True, "field": result}
+
+
+async def tool_field_update(m: FieldUpdateInput) -> dict[str, Any]:
+    logger.info("STEPLOG START field_update")
+    base_id = _base_id(m.base)
+    table_id = await _resolve_table_id(m.base, m.table)
+    payload: dict[str, Any] = {}
+    if m.name:
+        payload["name"] = m.name
+    if m.options:
+        payload["options"] = m.options
+    if not payload:
+        raise AirtableError("Nichts zu ändern: name und/oder options angeben.")
+    url = f"https://api.airtable.com/v0/meta/bases/{base_id}/tables/{table_id}/fields/{m.field_id}"
+    if m.preview or not m.confirm:
+        return {"preview": True, "method": "PATCH", "url": url, "payload": payload,
+                "note": "Nichts gesendet. Zum Ändern preview=false und confirm=true setzen."}
+    result = await _at_request("PATCH", url, json=payload)
+    _schema_cache.pop(base_id, None)
+    return {"success": True, "field": result}
+
+
 MODELS: dict[str, Any] = {
     "schema_get": SchemaGetInput,
     "candidates_search": CandidatesSearchInput,
@@ -1452,6 +1685,12 @@ MODELS: dict[str, Any] = {
     "error_log": ErrorLogInput,
     "alerts_list": AlertsInput,
     "data_health": DataHealthInput,
+    "hook_test": HookTestInput,
+    "config_get": ConfigGetInput,
+    "config_set": ConfigSetInput,
+    "table_create": TableCreateInput,
+    "field_create": FieldCreateInput,
+    "field_update": FieldUpdateInput,
 }
 
 IMPL: dict[str, Any] = {
@@ -1477,6 +1716,12 @@ IMPL: dict[str, Any] = {
     "error_log": tool_error_log,
     "alerts_list": tool_alerts_list,
     "data_health": tool_data_health,
+    "hook_test": tool_hook_test,
+    "config_get": tool_config_get,
+    "config_set": tool_config_set,
+    "table_create": tool_table_create,
+    "field_create": tool_field_create,
+    "field_update": tool_field_update,
 }
 
 TOOL_DOCS: dict[str, str] = {
@@ -1502,6 +1747,12 @@ TOOL_DOCS: dict[str, str] = {
     "error_log": "Fehlerprotokoll: fehlgeschlagene Aufrufe mit Zeitpunkt, Werkzeug, Aufrufer und Ursache.",
     "alerts_list": "Gespeicherte Alarme (Fehler, Datenauffälligkeiten) und ob ein Alarm-Webhook konfiguriert ist.",
     "data_health": "Qualitätsprüfung: Datensätze ohne Status, ohne nächste Aktion, überfällig, mit fehlenden Unterlagen, verpassten Terminen oder doppelten Telefonnummern.",
+    "hook_test": "Testet die Anbindung an Airtable-Automationen: zeigt Hook-URL, Header und was ein Aufruf auslösen würde — ohne etwas zu schreiben.",
+    "config_get": "Aktuelle Konfiguration anzeigen: Standard-Base, ob Alarm-Webhook und Hook-Secret gesetzt sind.",
+    "config_set": "Konfiguration ändern: Alarm-Webhook, Hook-Secret, Standard-Base — wirkt sofort, ohne Redeploy.",
+    "table_create": "Neue Tabelle in der Base anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
+    "field_create": "Neues Feld in einer Tabelle anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
+    "field_update": "Feld umbenennen oder Auswahlwerte ändern (Vorschau zuerst, echte Änderung nur mit confirm).",
 }
 
 
@@ -1511,6 +1762,10 @@ async def run_tool(name: str, payload: dict[str, Any]) -> dict[str, Any]:
     model = MODELS[name]
     actor = _ACTOR.get()
     started = time.time()
+    if isinstance(payload, dict) and "base" not in payload and "base" in model.model_fields:
+        default_base = (await _config()).get("default_base")
+        if default_base:
+            payload = {**payload, "base": default_base}
     try:
         parsed = model(**{k: v for k, v in (payload or {}).items() if k in model.model_fields})
     except ValidationError as exc:
@@ -1852,6 +2107,80 @@ async def data_health(
     return await _mcp("data_health", {"base": base, "notify": notify, "limit": limit})
 
 
+@fast_app.tool()
+async def hook_test(
+    record_id: Annotated[str | None, Field(description="Datensatz für den Test")] = None,
+    base: Annotated[str, Field(description="kopieren oder original")] = "kopieren",
+) -> dict[str, Any]:
+    """Airtable-Hook testen: URL, Header und geplante Aktionen — ohne zu schreiben."""
+    return await _mcp("hook_test", {"record_id": record_id, "base": base})
+
+
+@fast_app.tool()
+async def config_get() -> dict[str, Any]:
+    """Aktuelle Konfiguration: Standard-Base, Alarm-Webhook, Hook-Secret."""
+    return await _mcp("config_get", {})
+
+
+@fast_app.tool()
+async def config_set(
+    alert_webhook_url: Annotated[str | None, Field(description="HTTPS-Adresse für Alarme")] = None,
+    hook_secret: Annotated[str | None, Field(description="Mindestens 16 Zeichen")] = None,
+    default_base: Annotated[str | None, Field(description="kopieren oder original")] = None,
+    clear: Annotated[list[str] | None, Field(description="Schlüssel entfernen")] = None,
+) -> dict[str, Any]:
+    """Alarm-Webhook, Hook-Secret oder Standard-Base setzen — wirkt sofort."""
+    return await _mcp(
+        "config_set",
+        {"alert_webhook_url": alert_webhook_url, "hook_secret": hook_secret,
+         "default_base": default_base, "clear": clear},
+    )
+
+
+@fast_app.tool()
+async def table_create(
+    name: Annotated[str, Field(description="Name der neuen Tabelle")],
+    fields: Annotated[list[dict[str, Any]], Field(description="Feldliste, erstes Feld ist das Primärfeld")],
+    description: Annotated[str | None, Field(description="Beschreibung")] = None,
+    base: Annotated[str, Field(description="kopieren oder original")] = "kopieren",
+    preview: Annotated[bool, Field(description="true = nur zeigen")] = True,
+    confirm: Annotated[bool, Field(description="Muss true sein zum Anlegen")] = False,
+) -> dict[str, Any]:
+    """Neue Tabelle anlegen (Vorschau zuerst)."""
+    return await _mcp("table_create", {"name": name, "fields": fields, "description": description,
+                                       "base": base, "preview": preview, "confirm": confirm})
+
+
+@fast_app.tool()
+async def field_create(
+    table: Annotated[str, Field(description="Tabellenname oder Schlüssel")],
+    name: Annotated[str, Field(description="Feldname")],
+    type: Annotated[str, Field(description="Airtable-Feldtyp")],
+    options: Annotated[dict[str, Any] | None, Field(description="Optionen, z.B. choices")] = None,
+    base: Annotated[str, Field(description="kopieren oder original")] = "kopieren",
+    preview: Annotated[bool, Field(description="true = nur zeigen")] = True,
+    confirm: Annotated[bool, Field(description="Muss true sein zum Anlegen")] = False,
+) -> dict[str, Any]:
+    """Neues Feld anlegen (Vorschau zuerst)."""
+    return await _mcp("field_create", {"table": table, "name": name, "type": type, "options": options,
+                                       "base": base, "preview": preview, "confirm": confirm})
+
+
+@fast_app.tool()
+async def field_update(
+    table: Annotated[str, Field(description="Tabellenname oder Schlüssel")],
+    field_id: Annotated[str, Field(description="Feld-ID fld…")],
+    name: Annotated[str | None, Field(description="Neuer Name")] = None,
+    options: Annotated[dict[str, Any] | None, Field(description="Neue Optionen")] = None,
+    base: Annotated[str, Field(description="kopieren oder original")] = "kopieren",
+    preview: Annotated[bool, Field(description="true = nur zeigen")] = True,
+    confirm: Annotated[bool, Field(description="Muss true sein zum Ändern")] = False,
+) -> dict[str, Any]:
+    """Feld umbenennen oder Auswahlwerte ändern (Vorschau zuerst)."""
+    return await _mcp("field_update", {"table": table, "field_id": field_id, "name": name, "options": options,
+                                       "base": base, "preview": preview, "confirm": confirm})
+
+
 # ---------------------------------------------------------------- FastAPI app
 def create_fastapi_app() -> FastAPI:
     starlette_app = fast_app.streamable_http_app()
@@ -1950,7 +2279,7 @@ def create_fastapi_app() -> FastAPI:
 
     @app.post("/hooks/airtable")
     async def airtable_hook(request: Request) -> JSONResponse:
-        secret = (os.environ.get("HOOK_SECRET") or "").strip()
+        secret = await _effective("hook_secret")
         if secret and request.headers.get("X-Hook-Secret") != secret:
             return JSONResponse(status_code=401, content={"success": False, "error": "Ungültiges Hook-Secret"})
         try:
@@ -1969,6 +2298,17 @@ def create_fastapi_app() -> FastAPI:
             _ACTOR.reset(token)
         logger.info("Airtable automation hook", event=payload.event, planned=run.get("planned"))
         return JSONResponse(content={"success": True, "event": payload.event, "automation": run})
+
+    @app.post("/hooks/airtable/test")
+    async def airtable_hook_test(request: Request) -> JSONResponse:
+        try:
+            body = await request.json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        record_id = body.get("record_id") if isinstance(body, dict) else None
+        base = body.get("base", "kopieren") if isinstance(body, dict) else "kopieren"
+        result = await run_tool("hook_test", {"record_id": record_id, "base": base})
+        return JSONResponse(content=result)
 
     @app.post("/", response_model=RootResponse)
     async def root(payload: RootRequest) -> JSONResponse:
