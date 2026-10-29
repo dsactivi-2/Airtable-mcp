@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ilvana Airtable MCP",
-    "version": "1.2.0",
-    "description": "Kandidaten-CRM: Suche, Akte, Schreiben, Uploads, Automatik, Protokoll, Konfiguration und Base-Änderungen."
+    "version": "1.4.0",
+    "description": "Kandidaten-CRM: Suche, Akte, Anlegen, Ändern, Uploads, Automatik, Protokoll, Konfiguration, Base-Änderungen."
   },
   "servers": [
     {
@@ -123,6 +123,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -132,6 +133,7 @@
                   },
                   "limit": {
                     "default": 25,
+                    "description": "Treffer pro Seite",
                     "maximum": 100,
                     "minimum": 1,
                     "title": "Limit",
@@ -139,6 +141,7 @@
                   },
                   "offset": {
                     "default": 0,
+                    "description": "Seiten-Offset",
                     "minimum": 0,
                     "title": "Offset",
                     "type": "integer"
@@ -203,6 +206,7 @@
                       }
                     ],
                     "default": null,
+                    "description": "Status kandidata exakt, z.B. Casting, Primljeni, Ugovor",
                     "title": "Status Kandidata"
                   },
                   "casting_grupa": {
@@ -215,6 +219,7 @@
                       }
                     ],
                     "default": null,
+                    "description": "Casting-Gruppe: UJUTRO oder POPODNE",
                     "title": "Casting Grupa"
                   },
                   "casting_ishod": {
@@ -227,6 +232,7 @@
                       }
                     ],
                     "default": null,
+                    "description": "Casting-Ergebnis, z.B. Došao, Prošao praktični",
                     "title": "Casting Ishod"
                   },
                   "ugovor_tok": {
@@ -239,6 +245,7 @@
                       }
                     ],
                     "default": null,
+                    "description": "Vertragsstand: Priprema, Poslato kandidatu, Potpisan, Poslato nadležnima",
                     "title": "Ugovor Tok"
                   },
                   "visa_ishod": {
@@ -251,6 +258,7 @@
                       }
                     ],
                     "default": null,
+                    "description": "Visum-Ergebnis: Dopuna, Dobio vizu, Odbijenica",
                     "title": "Visa Ishod"
                   },
                   "casting_from": {
@@ -306,6 +314,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -321,6 +330,7 @@
                   },
                   "sort_dir": {
                     "default": "asc",
+                    "description": "Sortierrichtung",
                     "enum": [
                       "asc",
                       "desc"
@@ -330,6 +340,7 @@
                   },
                   "limit": {
                     "default": 25,
+                    "description": "Treffer pro Seite",
                     "maximum": 100,
                     "minimum": 1,
                     "title": "Limit",
@@ -337,6 +348,7 @@
                   },
                   "offset": {
                     "default": 0,
+                    "description": "Seiten-Offset",
                     "minimum": 0,
                     "title": "Offset",
                     "type": "integer"
@@ -406,6 +418,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -444,6 +457,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -485,6 +499,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -534,6 +549,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -543,6 +559,7 @@
                   },
                   "limit": {
                     "default": 50,
+                    "description": "Maximale Anzahl",
                     "maximum": 100,
                     "minimum": 1,
                     "title": "Limit",
@@ -574,6 +591,7 @@
                 "properties": {
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -607,6 +625,7 @@
                 "properties": {
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -659,6 +678,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -682,6 +702,68 @@
                 },
                 "required": [
                   "record_id",
+                  "fields"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON mit success und result"
+          }
+        }
+      }
+    },
+    "/tools/application_create": {
+      "post": {
+        "operationId": "application_create",
+        "summary": "Neue Bewerbung anlegen (mindestens 'Ime i prezime'); prüft vorher auf gleiche Telefonnummer und legt nur mit allow_dupli",
+        "description": "Neue Bewerbung anlegen (mindestens 'Ime i prezime'); prüft vorher auf gleiche Telefonnummer und legt nur mit allow_duplicate=true trotzdem an.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "fields": {
+                    "additionalProperties": true,
+                    "description": "Felder des neuen Datensatzes; 'Ime i prezime' ist Pflicht",
+                    "title": "Fields",
+                    "type": "object"
+                  },
+                  "note": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optionaler Startvermerk in 'Bilješka'",
+                    "title": "Note"
+                  },
+                  "allow_duplicate": {
+                    "default": false,
+                    "description": "true = trotz gleicher Telefonnummer anlegen",
+                    "title": "Allow Duplicate",
+                    "type": "boolean"
+                  },
+                  "base": {
+                    "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
+                    "enum": [
+                      "kopieren",
+                      "original"
+                    ],
+                    "title": "Base",
+                    "type": "string"
+                  }
+                },
+                "required": [
                   "fields"
                 ],
                 "type": "object"
@@ -745,6 +827,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -805,6 +888,7 @@
                     "type": "string"
                   },
                   "note": {
+                    "description": "Notiztext",
                     "maxLength": 4000,
                     "minLength": 1,
                     "title": "Note",
@@ -812,12 +896,14 @@
                   },
                   "author": {
                     "default": "agent",
+                    "description": "Verfasser, erscheint in der Notiz",
                     "maxLength": 80,
                     "title": "Author",
                     "type": "string"
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -887,6 +973,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -950,6 +1037,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -1001,6 +1089,7 @@
                 "properties": {
                   "action": {
                     "default": "list",
+                    "description": "list, create oder update",
                     "enum": [
                       "list",
                       "create",
@@ -1032,6 +1121,7 @@
                       }
                     ],
                     "default": null,
+                    "description": "Aufgabentitel",
                     "title": "Name"
                   },
                   "notes": {
@@ -1044,6 +1134,7 @@
                       }
                     ],
                     "default": null,
+                    "description": "Beschreibung der Aufgabe",
                     "title": "Notes"
                   },
                   "status": {
@@ -1061,10 +1152,12 @@
                       }
                     ],
                     "default": null,
+                    "description": "Aufgabenstatus",
                     "title": "Status"
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -1074,6 +1167,7 @@
                   },
                   "limit": {
                     "default": 25,
+                    "description": "Treffer pro Seite",
                     "maximum": 100,
                     "minimum": 1,
                     "title": "Limit",
@@ -1105,6 +1199,7 @@
                 "properties": {
                   "action": {
                     "default": "get",
+                    "description": "get = Regeln ansehen, set = Regeln überschreiben",
                     "enum": [
                       "get",
                       "set"
@@ -1155,6 +1250,7 @@
                 "properties": {
                   "mode": {
                     "default": "preview",
+                    "description": "preview = nur zeigen, apply = schreiben",
                     "enum": [
                       "preview",
                       "apply"
@@ -1164,6 +1260,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -1173,6 +1270,7 @@
                   },
                   "limit": {
                     "default": 300,
+                    "description": "Maximale Anzahl Datensätze",
                     "maximum": 1000,
                     "minimum": 1,
                     "title": "Limit",
@@ -1220,6 +1318,7 @@
                 "properties": {
                   "limit": {
                     "default": 25,
+                    "description": "Anzahl Einträge",
                     "maximum": 200,
                     "minimum": 1,
                     "title": "Limit",
@@ -1251,6 +1350,7 @@
                 "properties": {
                   "limit": {
                     "default": 50,
+                    "description": "Anzahl Einträge",
                     "maximum": 500,
                     "minimum": 1,
                     "title": "Limit",
@@ -1321,6 +1421,7 @@
                 "properties": {
                   "limit": {
                     "default": 50,
+                    "description": "Anzahl Einträge",
                     "maximum": 500,
                     "minimum": 1,
                     "title": "Limit",
@@ -1352,6 +1453,7 @@
                 "properties": {
                   "limit": {
                     "default": 50,
+                    "description": "Anzahl Einträge",
                     "maximum": 500,
                     "minimum": 1,
                     "title": "Limit",
@@ -1383,6 +1485,7 @@
                 "properties": {
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -1398,6 +1501,7 @@
                   },
                   "limit": {
                     "default": 20,
+                    "description": "Beispiele pro Kategorie",
                     "maximum": 100,
                     "minimum": 1,
                     "title": "Limit",
@@ -1442,6 +1546,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -1605,10 +1710,12 @@
                       }
                     ],
                     "default": null,
+                    "description": "Beschreibung der Tabelle",
                     "title": "Description"
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -1689,6 +1796,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -1698,11 +1806,13 @@
                   },
                   "preview": {
                     "default": true,
+                    "description": "true = nur zeigen, was gesendet würde",
                     "title": "Preview",
                     "type": "boolean"
                   },
                   "confirm": {
                     "default": false,
+                    "description": "Muss true sein, damit wirklich geschrieben wird",
                     "title": "Confirm",
                     "type": "boolean"
                   }
@@ -1774,6 +1884,7 @@
                   },
                   "base": {
                     "default": "kopieren",
+                    "description": "Base: kopieren (Standard) oder original",
                     "enum": [
                       "kopieren",
                       "original"
@@ -1783,11 +1894,13 @@
                   },
                   "preview": {
                     "default": true,
+                    "description": "true = nur zeigen, was gesendet würde",
                     "title": "Preview",
                     "type": "boolean"
                   },
                   "confirm": {
                     "default": false,
+                    "description": "Muss true sein, damit wirklich geschrieben wird",
                     "title": "Confirm",
                     "type": "boolean"
                   }
