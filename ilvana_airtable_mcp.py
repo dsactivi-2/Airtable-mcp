@@ -79,8 +79,16 @@ EARLY_STATUSES = {"Zainteresiran", "Zeleni / obrada"}
 TZ = ZoneInfo("Europe/Sarajevo")
 SCHEMA_TTL = 300
 
-SERVICE_VERSION = "1.5.1"
+SERVICE_VERSION = "1.5.2"
 SERVICE_CHANGELOG: list[dict[str, Any]] = [
+    {
+        "version": "1.5.2",
+        "date": "2026-10-29",
+        "changes": [
+            "Alarme protokollieren die Zustellung: delivered, delivery_status, delivery_error",
+            "alerts_list zeigt damit, ob der Webhook wirklich angenommen hat",
+        ],
+    },
     {
         "version": "1.5.1",
         "date": "2026-10-29",
@@ -236,26 +244,38 @@ async def _effective(key: str, env_name: str | None = None) -> str:
 
 
 async def _push_alert(kind: str, message: str, details: dict[str, Any] | None = None) -> bool:
-    """Store an alert and push it to the configured alert webhook."""
-    entry = {
+    """Send an alert to the configured webhook and always store it with delivery state."""
+    url = await _effective("alert_webhook_url")
+    entry: dict[str, Any] = {
         "at": _now_iso(),
         "kind": kind,
         "message": message,
         "details": details or {},
         "actor": _ACTOR.get(),
     }
-    await _append_log("alerts", entry, 500)
-    url = await _effective("alert_webhook_url")
+    delivered = False
+    delivery_status: int | None = None
+    delivery_error: str | None = None
     if not url:
         logger.info("Alert stored (no webhook configured)", kind=kind)
-        return False
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            await client.post(url, json={"service": "ilvana-airtable", **entry})
-        return True
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("Alert webhook failed", error=str(exc))
-        return False
+    else:
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.post(url, json={"service": "ilvana-airtable", **entry})
+            delivery_status = response.status_code
+            delivered = 200 <= response.status_code < 300
+            if not delivered:
+                delivery_error = f"HTTP {response.status_code}"
+        except Exception as exc:  # noqa: BLE001
+            delivery_error = str(exc)[:200]
+            logger.warning("Alert webhook failed", error=delivery_error)
+    entry["webhook_configured"] = bool(url)
+    entry["delivered"] = delivered
+    entry["delivery_status"] = delivery_status
+    if delivery_error:
+        entry["delivery_error"] = delivery_error
+    await _append_log("alerts", entry, 500)
+    return delivered
 
 
 def _record_ids_of(result: dict[str, Any]) -> list[str]:
