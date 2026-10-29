@@ -39,7 +39,7 @@ Hermes spricht MCP über Streamable HTTP. Konfiguration:
 }
 ```
 
-Danach stehen 18 Werkzeuge bereit (`schema_get`, `candidates_search`, `applications_search`,
+Danach stehen 30 Werkzeuge bereit (`schema_get`, `candidates_search`, `applications_search`,
 `candidate_dossier`, `application_update`, `document_upload`, `automation_run`, …).
 Lade zusätzlich `skills/ilvana-airtable/SKILL.md` als System- oder Projektwissen.
 
@@ -71,7 +71,7 @@ ChatGPT spricht kein MCP. Nutze eine **Action**:
    Wissensdateien hochladen)
 5. Testen: „Wer ist Haris Mihaljevic und was ist der nächste Schritt?“
 
-Die Action enthält 18 Operationen — unter dem ChatGPT-Limit von 30.
+Die Action enthält 30 Operationen — genau am ChatGPT-Limit von 30. Für mehr Werkzeuge eine zweite Action anlegen.
 
 ## Grok (Web)
 
