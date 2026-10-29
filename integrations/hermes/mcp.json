@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ilvana-airtable": {
+      "url": "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/mcp/",
+      "headers": {
+        "Authorization": "Bearer REPLACE_WITH_CODEWORDS_API_KEY",
+        "X-Actor": "hermes"
+      }
+    }
+  }
+}
