@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.7 — 2026-10-29
+
+- Regression behoben: die eigene OpenAPI-Spec enthielt keinen Root-Endpunkt mehr, dadurch hatte die
+  Run-Seite (`/run/{service_id}`) nichts zu rendern
+- `POST /` ist wieder enthalten, mit `RootRequest`/`RootResponse` in `components.schemas`
+- `POST /automation/daily` und `components.schemas` ergänzt (34 Pfade)
+
 ## 1.5.6 — 2026-10-29
 
 - `data_health` prüft alle drei Tabellen (Prijave, Table 1, Casting ocjene) inklusive Aufgaben ohne Namen/Status
