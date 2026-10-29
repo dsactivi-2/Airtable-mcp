@@ -62,7 +62,9 @@ def main():
     hits = []
     try:
         for block in search.get("content", []):
-            hits = json.loads(block.get("text", "{}")).get("result", {}).get("candidates", [])
+            payload = json.loads(block.get("text", "{}"))
+            data = payload.get("result", payload)
+            hits = data.get("candidates", [])
     except Exception:
         pass
     step("Treffer vorhanden", bool(hits), f"{len(hits)} Kandidaten")
