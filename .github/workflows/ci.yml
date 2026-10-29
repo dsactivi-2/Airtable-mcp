@@ -36,7 +36,7 @@ jobs:
           src = pathlib.Path("ilvana_airtable_mcp.py").read_text()
           tools = src.count("@fast_app.tool()")
           spec = json.loads(pathlib.Path("openapi/ilvana-airtable.openapi.json").read_text())
-          paths = len(spec["paths"])
+          paths = len([p for p in spec["paths"] if p.startswith("/tools/")])
           print("source:", tools, "openapi:", paths)
           if tools != paths:
               sys.exit("Werkzeugzahl weicht ab")
