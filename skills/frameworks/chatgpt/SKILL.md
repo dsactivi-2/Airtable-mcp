@@ -10,7 +10,7 @@ ChatGPT spricht kein MCP. Der Weg ist eine **Action** über OpenAPI.
 ## Einrichten
 
 1. GPT erstellen → **Configure** → **Actions** → **Create new action**
-2. **Schema:** Inhalt von `openapi/ilvana-airtable.openapi.json` einfügen (30 Operationen — genau am Limit von 30)
+2. **Schema:** URL `https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/openapi.json` importieren (30 Operationen — genau am Limit); alternativ die Datei `openapi/ilvana-airtable.openapi.json` einfügen
 3. **Authentication:** *API Key* → Auth Type **Bearer** → Key = `CODEWORDS_API_KEY`
 4. **Instructions:** Inhalt von `skills/ilvana-airtable/SKILL.md`
 5. **Knowledge:** die Dateien aus `references/` hochladen (Schema, Filter, Tags, Automatik)
