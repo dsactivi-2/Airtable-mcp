@@ -67,4 +67,4 @@ Alarme werden immer gespeichert. Erst `ALERT_WEBHOOK_URL` macht daraus eine Push
 ## Anbindung an Airtable Automation
 
 `POST /hooks/airtable` mit `{"record_id": "rec...", "mode": "apply", "event": "..."}`.
-Mit `HOOK_SECRET` ist der Header `X-Hook-Secret` Pflicht. `mode=preview` schreibt nichts — gut zum Testen.
+Mit `HOOK_SECRET` ist das Feld `hook_secret` im JSON-Body Pflicht (Header entfernt das Gateway). `mode=preview` schreibt nichts — gut zum Testen.
