@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3 — 2026-10-29
+
+- `GET /openapi.json` liefert die vollständige Werkzeug-Spec (30 Operationen + `/health`),
+  direkt importierbar bei ChatGPT-Actions und Grok
+
 ## 1.5.2 — 2026-10-29
 
 - Alarme protokollieren die Zustellung: `delivered`, `delivery_status`, `delivery_error`
