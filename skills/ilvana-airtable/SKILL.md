@@ -101,7 +101,7 @@ Antwort enthält `version`, `tool_count`, `tool_names`, `changelog` und `secrets
 | Secret | Wer | Wo | Warum |
 |---|---|---|---|
 | `AIRTABLE_PAT` | **nur ein Mensch** (Kontoinhaber) | CodeWords → Projekt → Integrations-Panel | Zugriff auf die Bases; über Werkzeuge **nicht** änderbar |
-| `HOOK_SECRET` | Mensch legt den Wert fest; Agent darf ihn setzen | Panel **oder** `config_set` — derselbe Wert zusätzlich in der Airtable-Automation als `X-Hook-Secret` | ohne Secret ist `apply` auf `/hooks/airtable` gesperrt |
+| `HOOK_SECRET` | Mensch legt den Wert fest; Agent darf ihn setzen | Panel **oder** `config_set` — derselbe Wert zusätzlich in der Airtable-Automation als Feld `hook_secret` im Body | ohne Secret ist `apply` auf `/hooks/airtable` gesperrt |
 | `ALERT_WEBHOOK_URL` | Mensch besorgt die Adresse; Agent darf sie setzen | Panel **oder** `config_set` | ohne URL werden Alarme nur gespeichert |
 
 Ein Agent darf **nie** nach `AIRTABLE_PAT` fragen — er bekommt ihn nicht und braucht ihn nicht.
