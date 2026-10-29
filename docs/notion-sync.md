@@ -61,3 +61,22 @@ Zielseite ändern: `NOTION_PARENT_PAGE` überschreiben, dann einmal `POST /` —
 | `NOTION_TOKEN ist nicht gesetzt` | Secret fehlt im Dienst |
 | `schema/tools antwortet mit 401` | CodeWords-Key im Dienst ungültig |
 | `0 Werkzeuge` | Ilvana-Dienst nicht erreichbar oder Werkzeugliste leer |
+
+
+## Überwachung
+
+| Endpunkt | Zweck |
+|---|---|
+| `GET /status` | letzter Lauf (Zeitpunkt, Ergebnis, Zähler) aus dem Herzschlag |
+| `POST /check` | prüft, ob der letzte Lauf erfolgreich und jünger als 26 Stunden ist |
+
+Ist der Lauf älter als 26 Stunden oder fehlgeschlagen, schickt `/check` einen Alarm an
+`ALERT_WEBHOOK_URL` (`kind: notion_sync_stale` bzw. `notion_sync_failed`).
+Zeitplan: `cron(0 * * * ? *)` — stündlich.
+
+## Statusbericht im Repo
+
+`scripts/status_report.py` erzeugt `status/status.json` (Badge) und `status/status.md`.
+Die GitHub Action `.github/workflows/status.yml` läuft stündlich und committet den Bericht.
+Voraussetzung: Repository-Secret `CODEWORDS_API_KEY` (Settings → Secrets → Actions).
+Fehlt es, überspringt der Workflow den Lauf mit einer Warnung statt zu scheitern.
