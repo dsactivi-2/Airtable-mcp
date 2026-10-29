@@ -338,3 +338,8 @@ Löschen ist weiterhin nicht möglich; ein versehentlich angelegter Datensatz wi
 
 Selbstauskunft des Dienstes: `POST /tools/service_info` zeigt Version, Änderungsverlauf und genau diese
 Tabelle mit aktuellem Status (`configured: true/false`).
+
+
+---
+
+Alle drei Secrets mit Herkunft, Eintragung und Rotation: [secrets-checkliste.md](secrets-checkliste.md)
