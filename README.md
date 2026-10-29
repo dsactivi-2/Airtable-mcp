@@ -99,7 +99,7 @@ Aufrufer (`actor`) kommt aus dem Header `X-Actor` bzw. `X-Client`; ohne Header n
 {"record_id": "rec...", "mode": "apply", "event": "Status gewechselt"}
 ```
 
-Ist `HOOK_SECRET` gesetzt, ist der Header `X-Hook-Secret` Pflicht.
+Ist `HOOK_SECRET` gesetzt, muss `hook_secret` im JSON-Body stehen (Header werden entfernt).
 
 ## Einrichtung
 
