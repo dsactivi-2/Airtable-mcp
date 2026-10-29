@@ -13,7 +13,9 @@
 #   "LOGLEVEL=INFO",
 #   "CODEWORDS_API_KEY",
 #   "CODEWORDS_RUNTIME_URI",
-#   "AIRTABLE_PAT"
+#   "AIRTABLE_PAT",
+#   "ALERT_WEBHOOK_URL=",
+#   "HOOK_SECRET="
 # ]
 # ///
 """
@@ -30,6 +32,7 @@ import os
 import re
 import time
 import unicodedata
+from contextvars import ContextVar
 from datetime import date, datetime, timedelta
 from typing import Annotated, Any, Literal
 from zoneinfo import ZoneInfo
@@ -76,6 +79,18 @@ EARLY_STATUSES = {"Zainteresiran", "Zeleni / obrada"}
 TZ = ZoneInfo("Europe/Sarajevo")
 SCHEMA_TTL = 300
 _schema_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+_ACTOR: ContextVar[str] = ContextVar("actor", default="api")
+
+WRITE_TOOLS = {
+    "application_update",
+    "applications_bulk_update",
+    "application_add_note",
+    "casting_rating_upsert",
+    "document_upload",
+    "tasks_manage",
+    "automation_rules",
+    "automation_run",
+}
 
 DEFAULT_RULES: list[dict[str, Any]] = [
     {
@@ -129,6 +144,50 @@ class AirtableError(Exception):
         super().__init__(message)
         self.message = message
         self.status = status
+
+
+async def _append_log(key: str, entry: dict[str, Any], cap: int = 1000) -> None:
+    """Write one entry to a capped Redis list (audit, errors, alerts)."""
+    try:
+        async with redis_client() as (redis, ns):
+            await redis.lpush(f"{ns}:{key}", json.dumps(entry, ensure_ascii=False))
+            await redis.ltrim(f"{ns}:{key}", 0, cap - 1)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Log write failed", key=key, error=str(exc))
+
+
+async def _push_alert(kind: str, message: str, details: dict[str, Any] | None = None) -> bool:
+    """Store an alert and push it to ALERT_WEBHOOK_URL when configured."""
+    entry = {
+        "at": _now_iso(),
+        "kind": kind,
+        "message": message,
+        "details": details or {},
+        "actor": _ACTOR.get(),
+    }
+    await _append_log("alerts", entry, 500)
+    url = (os.environ.get("ALERT_WEBHOOK_URL") or "").strip()
+    if not url:
+        logger.info("Alert stored (no webhook configured)", kind=kind)
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            await client.post(url, json={"service": "ilvana-airtable", **entry})
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Alert webhook failed", error=str(exc))
+        return False
+
+
+def _record_ids_of(result: dict[str, Any]) -> list[str]:
+    ids: list[str] = []
+    for key in ("record_id", "rating_id", "task_id"):
+        value = result.get(key)
+        if value:
+            ids.append(str(value))
+    for item in (result.get("record_ids") or [])[:50]:
+        ids.append(str(item))
+    return ids[:50]
 
 
 def _norm_text(value: Any) -> str:
@@ -1244,6 +1303,132 @@ async def tool_automation_log(m: AutomationLogInput) -> dict[str, Any]:
     return {"count": len(entries), "entries": entries}
 
 
+class AuditListInput(BaseModel):
+    limit: int = Field(default=50, ge=1, le=500)
+    tool: str | None = Field(default=None, description="Nur Einträge dieses Werkzeugs")
+    record_id: str | None = Field(default=None, description="Nur Einträge zu diesem Datensatz")
+    actor: str | None = Field(default=None, description="Nur Einträge dieses Aufrufers")
+
+
+class ErrorLogInput(BaseModel):
+    limit: int = Field(default=50, ge=1, le=500)
+
+
+class AlertsInput(BaseModel):
+    limit: int = Field(default=50, ge=1, le=500)
+
+
+class DataHealthInput(BaseModel):
+    base: BaseName = Field(default="kopieren")
+    notify: bool = Field(default=False, description="true = Auffälligkeiten als Alarm melden")
+    limit: int = Field(default=20, ge=1, le=100)
+
+
+class AirtableHookRequest(BaseModel):
+    record_id: str | None = Field(default=None, description="Datensatz, der die Automation ausgelöst hat")
+    record_ids: list[str] | None = Field(default=None, description="Mehrere Datensätze")
+    mode: Literal["preview", "apply"] = Field(default="apply")
+    base: BaseName = Field(default="kopieren")
+    event: str | None = Field(default=None, description="Freitext, z.B. Airtable-Automation-Name")
+
+
+async def _read_log(key: str, read: int = 500) -> list[dict[str, Any]]:
+    async with redis_client() as (redis, ns):
+        raw = await redis.lrange(f"{ns}:{key}", 0, read - 1)
+    entries: list[dict[str, Any]] = []
+    for item in raw:
+        try:
+            entries.append(json.loads(item))
+        except Exception:  # noqa: BLE001
+            entries.append({"raw": item})
+    return entries
+
+
+async def tool_audit_list(m: AuditListInput) -> dict[str, Any]:
+    logger.info("STEPLOG START audit_list")
+    entries = await _read_log("audit")
+    if m.tool:
+        entries = [e for e in entries if e.get("tool") == m.tool]
+    if m.record_id:
+        entries = [e for e in entries if m.record_id in (e.get("record_ids") or [])]
+    if m.actor:
+        entries = [e for e in entries if str(e.get("actor")) == m.actor]
+    return {"count": len(entries[: m.limit]), "total_matching": len(entries), "entries": entries[: m.limit]}
+
+
+async def tool_error_log(m: ErrorLogInput) -> dict[str, Any]:
+    logger.info("STEPLOG START error_log")
+    entries = await _read_log("errors")
+    return {"count": len(entries[: m.limit]), "total": len(entries), "entries": entries[: m.limit]}
+
+
+async def tool_alerts_list(m: AlertsInput) -> dict[str, Any]:
+    logger.info("STEPLOG START alerts_list")
+    entries = await _read_log("alerts")
+    return {
+        "count": len(entries[: m.limit]),
+        "total": len(entries),
+        "webhook_configured": bool((os.environ.get("ALERT_WEBHOOK_URL") or "").strip()),
+        "entries": entries[: m.limit],
+    }
+
+
+async def tool_data_health(m: DataHealthInput) -> dict[str, Any]:
+    logger.info("STEPLOG START data_health")
+    briefs = await _records_brief(m.base)
+    raw = await _fetch_records(m.base, "prijave", max_records=3000)
+    today = _today()
+    no_status = [b for b in briefs if not b["status"]]
+    no_next_action = [b for b in briefs if not b["next_action"] and b["status"] not in FINAL_STATUSES]
+    overdue = [b for b in briefs if b["overdue"]]
+    missing = [b for b in briefs if b["missing_documents"]]
+    past_appointments = []
+    for item in briefs:
+        if item["status"] in FINAL_STATUSES:
+            continue
+        for key in ("casting_date", "visa_date"):
+            parsed = _parse_date(item.get(key))
+            if parsed and parsed < today:
+                past_appointments.append({**item, "field": key, "date": parsed.isoformat()})
+    phones: dict[str, list[str]] = {}
+    for record in raw:
+        fields = record.get("fields") or {}
+        digits = _norm_phone(f"{fields.get('Pozivni broj') or ''}{fields.get('Broj telefona') or ''}")
+        if len(digits) >= 7:
+            phones.setdefault(digits, []).append(_candidate_name(fields) or record["id"])
+    duplicates = [{"phone": key, "names": names} for key, names in phones.items() if len(names) > 1]
+    issues = (
+        len(no_status) + len(no_next_action) + len(overdue) + len(missing)
+        + len(past_appointments) + len(duplicates)
+    )
+    if m.notify and issues:
+        await _push_alert(
+            "data_health",
+            f"{issues} Auffälligkeiten in {BASE_LABEL[m.base]}",
+            {
+                "base": m.base,
+                "ohne_status": len(no_status),
+                "ohne_naechste_aktion": len(no_next_action),
+                "ueberfaellig": len(overdue),
+                "fehlende_unterlagen": len(missing),
+                "termine_verpasst": len(past_appointments),
+                "doppelte_nummern": len(duplicates),
+            },
+        )
+    return {
+        "base": m.base,
+        "total": len(briefs),
+        "issues": issues,
+        "ok": issues == 0,
+        "without_status": no_status[: m.limit],
+        "without_next_action": no_next_action[: m.limit],
+        "overdue_actions": overdue[: m.limit],
+        "missing_documents": missing[: m.limit],
+        "past_appointments": past_appointments[: m.limit],
+        "duplicate_phones": duplicates[: m.limit],
+    }
+
+
 MODELS: dict[str, Any] = {
     "schema_get": SchemaGetInput,
     "candidates_search": CandidatesSearchInput,
@@ -1263,6 +1448,10 @@ MODELS: dict[str, Any] = {
     "automation_rules": AutomationRulesInput,
     "automation_run": AutomationRunInput,
     "automation_log": AutomationLogInput,
+    "audit_list": AuditListInput,
+    "error_log": ErrorLogInput,
+    "alerts_list": AlertsInput,
+    "data_health": DataHealthInput,
 }
 
 IMPL: dict[str, Any] = {
@@ -1284,6 +1473,10 @@ IMPL: dict[str, Any] = {
     "automation_rules": tool_automation_rules,
     "automation_run": tool_automation_run,
     "automation_log": tool_automation_log,
+    "audit_list": tool_audit_list,
+    "error_log": tool_error_log,
+    "alerts_list": tool_alerts_list,
+    "data_health": tool_data_health,
 }
 
 TOOL_DOCS: dict[str, str] = {
@@ -1305,6 +1498,10 @@ TOOL_DOCS: dict[str, str] = {
     "automation_rules": "Automatik-Regeln ansehen oder ändern.",
     "automation_run": "Automatik ausführen — preview zeigt nur den Plan, apply schreibt Änderungen und Aufgaben.",
     "automation_log": "Protokoll der Automatik und der Massenänderungen.",
+    "audit_list": "Verlauf: wer wann welches Werkzeug auf welchem Datensatz ausgeführt hat (filterbar nach Werkzeug, Datensatz, Aufrufer).",
+    "error_log": "Fehlerprotokoll: fehlgeschlagene Aufrufe mit Zeitpunkt, Werkzeug, Aufrufer und Ursache.",
+    "alerts_list": "Gespeicherte Alarme (Fehler, Datenauffälligkeiten) und ob ein Alarm-Webhook konfiguriert ist.",
+    "data_health": "Qualitätsprüfung: Datensätze ohne Status, ohne nächste Aktion, überfällig, mit fehlenden Unterlagen, verpassten Terminen oder doppelten Telefonnummern.",
 }
 
 
@@ -1312,11 +1509,48 @@ async def run_tool(name: str, payload: dict[str, Any]) -> dict[str, Any]:
     if name not in IMPL:
         raise AirtableError(f"Unbekanntes Werkzeug '{name}'.", status=404)
     model = MODELS[name]
+    actor = _ACTOR.get()
+    started = time.time()
     try:
         parsed = model(**{k: v for k, v in (payload or {}).items() if k in model.model_fields})
     except ValidationError as exc:
-        raise AirtableError(f"Ungültige Eingabe für {name}: {exc.errors()[0].get('msg')}") from exc
-    return await IMPL[name](parsed)
+        message = f"Ungültige Eingabe für {name}: {exc.errors()[0].get('msg')}"
+        await _append_log("errors", {"at": _now_iso(), "tool": name, "actor": actor, "error": message})
+        await _push_alert("validation_error", message, {"tool": name})
+        raise AirtableError(message) from exc
+    try:
+        result = await IMPL[name](parsed)
+    except AirtableError as exc:
+        await _append_log(
+            "errors",
+            {"at": _now_iso(), "tool": name, "actor": actor, "error": exc.message, "status": exc.status},
+        )
+        await _push_alert("tool_error", f"{name}: {exc.message}", {"tool": name, "status": exc.status})
+        raise
+    except Exception as exc:  # noqa: BLE001
+        message = f"Interner Fehler in {name}: {type(exc).__name__}: {exc}"
+        logger.exception("Tool crashed", tool=name)
+        await _append_log("errors", {"at": _now_iso(), "tool": name, "actor": actor, "error": message})
+        await _push_alert("tool_crash", message, {"tool": name})
+        raise AirtableError(message, status=500) from exc
+    if name in WRITE_TOOLS:
+        await _append_log(
+            "audit",
+            {
+                "at": _now_iso(),
+                "tool": name,
+                "actor": actor,
+                "base": (payload or {}).get("base", "kopieren"),
+                "record_ids": _record_ids_of(result),
+                "fields": sorted((payload or {}).get("fields", {}).keys())
+                if isinstance((payload or {}).get("fields"), dict)
+                else [],
+                "duration_s": round(time.time() - started, 2),
+                "summary": result.get("note") or result.get("appended") or result.get("matched"),
+            },
+            2000,
+        )
+    return result
 
 
 # ---------------------------------------------------------------- MCP server
@@ -1581,6 +1815,43 @@ async def automation_log(
     return await _mcp("automation_log", {"limit": limit})
 
 
+@fast_app.tool()
+async def audit_list(
+    limit: Annotated[int, Field(description="Anzahl Einträge", ge=1, le=500)] = 50,
+    tool: Annotated[str | None, Field(description="Nur dieses Werkzeug")] = None,
+    record_id: Annotated[str | None, Field(description="Nur dieser Datensatz")] = None,
+    actor: Annotated[str | None, Field(description="Nur dieser Aufrufer")] = None,
+) -> dict[str, Any]:
+    """Verlauf: wer wann was geändert hat."""
+    return await _mcp("audit_list", {"limit": limit, "tool": tool, "record_id": record_id, "actor": actor})
+
+
+@fast_app.tool()
+async def error_log(
+    limit: Annotated[int, Field(description="Anzahl Einträge", ge=1, le=500)] = 50,
+) -> dict[str, Any]:
+    """Fehlerprotokoll fehlgeschlagener Aufrufe."""
+    return await _mcp("error_log", {"limit": limit})
+
+
+@fast_app.tool()
+async def alerts_list(
+    limit: Annotated[int, Field(description="Anzahl Einträge", ge=1, le=500)] = 50,
+) -> dict[str, Any]:
+    """Gespeicherte Alarme und Status des Alarm-Webhooks."""
+    return await _mcp("alerts_list", {"limit": limit})
+
+
+@fast_app.tool()
+async def data_health(
+    base: Annotated[str, Field(description="kopieren oder original")] = "kopieren",
+    notify: Annotated[bool, Field(description="Auffälligkeiten als Alarm melden")] = False,
+    limit: Annotated[int, Field(description="Beispiele pro Kategorie", ge=1, le=100)] = 20,
+) -> dict[str, Any]:
+    """Qualitätsprüfung der Daten: Lücken, Fristen, Dubletten."""
+    return await _mcp("data_health", {"base": base, "notify": notify, "limit": limit})
+
+
 # ---------------------------------------------------------------- FastAPI app
 def create_fastapi_app() -> FastAPI:
     starlette_app = fast_app.streamable_http_app()
@@ -1602,6 +1873,21 @@ def create_fastapi_app() -> FastAPI:
     async def airtable_error_handler(request: Request, exc: AirtableError) -> JSONResponse:
         logger.warning("Airtable error", path=str(request.url), message=exc.message)
         return JSONResponse(status_code=exc.status, content={"success": False, "error": exc.message})
+
+    @app.middleware("http")
+    async def actor_middleware(request: Request, call_next):
+        actor = (
+            request.headers.get("X-Actor")
+            or request.headers.get("Codewords-Caller-Id")
+            or request.headers.get("X-Client")
+            or "api"
+        )
+        token = _ACTOR.set(actor[:80])
+        try:
+            response = await call_next(request)
+        finally:
+            _ACTOR.reset(token)
+        return response
 
     @app.get("/health")
     async def health() -> JSONResponse:
@@ -1658,8 +1944,31 @@ def create_fastapi_app() -> FastAPI:
     async def automation_daily(base: str = "kopieren", mode: str = "preview") -> JSONResponse:
         report = await run_tool("due_report", {"base": base, "days_ahead": 7})
         run = await run_tool("automation_run", {"mode": mode, "base": base, "limit": 500})
-        logger.info("Daily automation finished", base=base, mode=mode, planned=run.get("planned"))
-        return JSONResponse(content={"report": report, "automation": run})
+        health = await run_tool("data_health", {"base": base, "notify": True, "limit": 20})
+        logger.info("Daily automation finished", base=base, mode=mode, planned=run.get("planned"), issues=health.get("issues"))
+        return JSONResponse(content={"report": report, "automation": run, "health": health})
+
+    @app.post("/hooks/airtable")
+    async def airtable_hook(request: Request) -> JSONResponse:
+        secret = (os.environ.get("HOOK_SECRET") or "").strip()
+        if secret and request.headers.get("X-Hook-Secret") != secret:
+            return JSONResponse(status_code=401, content={"success": False, "error": "Ungültiges Hook-Secret"})
+        try:
+            body = await request.json()
+        except Exception:  # noqa: BLE001
+            body = {}
+        payload = AirtableHookRequest(**body) if isinstance(body, dict) else AirtableHookRequest()
+        ids = payload.record_ids or ([payload.record_id] if payload.record_id else None)
+        token = _ACTOR.set("airtable-automation")
+        try:
+            run = await run_tool(
+                "automation_run",
+                {"mode": payload.mode, "base": payload.base, "record_ids": ids, "limit": 300},
+            )
+        finally:
+            _ACTOR.reset(token)
+        logger.info("Airtable automation hook", event=payload.event, planned=run.get("planned"))
+        return JSONResponse(content={"success": True, "event": payload.event, "automation": run})
 
     @app.post("/", response_model=RootResponse)
     async def root(payload: RootRequest) -> JSONResponse:
