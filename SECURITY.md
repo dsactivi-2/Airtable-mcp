@@ -25,7 +25,7 @@ Im Repository stehen **keine** echten Werte. `.env.example` enthält nur Platzha
 
 - **Auth:** jeder Aufruf braucht einen gültigen Bearer-Key der Plattform.
 - **Hook:** ohne gesetztes `HOOK_SECRET` ist `apply` **gesperrt** (HTTP 401); `preview` bleibt erlaubt.
-  Mit Secret gilt: Header `X-Hook-Secret` muss exakt passen.
+  Mit Secret gilt: das Feld `hook_secret` im JSON-Body muss exakt passen — den Header `X-Hook-Secret` entfernt das Gateway.
 - **Schreib-Whitelist:** nur Felder, die Airtable als beschreibbar meldet. Formeln, Verknüpfungen und
   Anhänge werden abgelehnt — mit Liste der erlaubten Felder.
 - **Auswahlwerte:** werden gegen die echten Optionen geprüft; keine stillen Neuanlagen.
