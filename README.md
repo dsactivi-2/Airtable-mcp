@@ -71,7 +71,7 @@ Fehlt eine Base im Token, antwortet der Dienst mit einer klaren Fehlermeldung st
 
 ## Betrieb
 
-Der Dienst laeuft als CodeWords-Service (FastAPI + FastMCP). Der Tageslauf ist aktiv (apply, taeglich 07:00 UTC = 08:00 Sarajevo). Umschalten auf echtes Schreiben: mode=apply.
+Der Dienst laeuft als CodeWords-Service (FastAPI + FastMCP). Der Tageslauf ist aktiv (apply, `cron(0 6 * * ? *)` = 07:00 Berlin/Sarajevo in der Winterzeit, 08:00 in der Sommerzeit). Umschalten auf echtes Schreiben: mode=apply.
 
 ## Schema
 
