@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 MCP = os.environ.get("ILVANA_URL", "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7")
 NOTION = os.environ.get("NOTION_URL", "https://runtime.codewords.ai/run/ilvana_notion_sync_0468633e")
 RUNTIME = "https://runtime.codewords.ai/run"
+GITHUB = "https://api.github.com/repos/dsactivi-2/Airtable-mcp"
 KEY = os.environ.get("CODEWORDS_API_KEY", "").strip()
 
 
@@ -28,6 +29,15 @@ def call(url, method="GET", body=None, extra=None):
         return json.loads(raw)
     except json.JSONDecodeError:
         return {"raw": raw}
+
+
+def github_state():
+    """Liest den oeffentlichen Repo-Zustand (letzter Push, offene Issues)."""
+    req = urllib.request.Request(GITHUB, headers={"User-Agent": "ilvana-status",
+                                                  "Accept": "application/vnd.github+json"})
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        data = json.load(resp)
+    return data.get("pushed_at"), data.get("open_issues_count", 0)
 
 
 def main():
@@ -75,6 +85,14 @@ def main():
         rows.append(("Zeitpläne", "Abfrage", str(exc)[:60], False))
         problems.append("Zeitpläne nicht abfragbar")
 
+    try:
+        pushed, open_issues = github_state()
+        stamp_push = str(pushed)[:16].replace("T", " ")
+        rows.append(("GitHub", "Repository", f"letzter Push {stamp_push} · {open_issues} offene Issues", True))
+    except Exception as exc:  # noqa: BLE001
+        rows.append(("GitHub", "Repository", str(exc)[:60], False))
+        problems.append("GitHub nicht erreichbar")
+
     healthy = not problems
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
@@ -88,7 +106,7 @@ def main():
         }, handle, ensure_ascii=False)
         handle.write("\n")
 
-    lines = ["# Stack-Status", "", f"Stand: {stamp}", "",
+    lines = ["# Stack-Status (drei Quellen)", "", f"Stand: {stamp}", "",
              "| Komponente | Prüfung | Ergebnis | OK |", "|---|---|---|---|"]
     for component, check, result, ok in rows:
         lines.append(f"| {component} | {check} | {result} | {'✅' if ok else '❌'} |")
