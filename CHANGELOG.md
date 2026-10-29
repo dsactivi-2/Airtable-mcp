@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0 — 2026-10-29
+
+- `application_create` — neue Bewerbung anlegen, mit Dubletten-Schutz auf Telefonnummer (409)
+- Neue Referenz `references/writing.md` (Anlegen, Ändern, Massenänderung, Notizen, Bewertungen, Uploads)
+- OpenAPI auf 29 Operationen, README und Skills angeglichen
+
 ## 1.3.0 — 2026-10-29
 
 - Alle 51 fehlenden Parameterbeschreibungen ergänzt (Function Calling)
