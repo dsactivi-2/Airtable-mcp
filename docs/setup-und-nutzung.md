@@ -170,7 +170,7 @@ Damit der Dienst in Sekunden reagiert statt am nächsten Morgen:
    `https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/hooks/airtable`
 4. Header:
    - `Content-Type: application/json`
-   - `X-Hook-Secret: <dein HOOK_SECRET>`
+   - `"hook_secret": "<dein HOOK_SECRET>"` im JSON-Body (Header werden entfernt)
    - `Authorization: Bearer <CODEWORDS_API_KEY>`
 5. Body:
 
