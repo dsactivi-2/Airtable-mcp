@@ -78,6 +78,49 @@ EARLY_STATUSES = {"Zainteresiran", "Zeleni / obrada"}
 
 TZ = ZoneInfo("Europe/Sarajevo")
 SCHEMA_TTL = 300
+
+SERVICE_VERSION = "1.5.0"
+SERVICE_CHANGELOG: list[dict[str, Any]] = [
+    {
+        "version": "1.5.0",
+        "date": "2026-10-29",
+        "changes": [
+            "service_info: Version, Werkzeugliste, Änderungen und Secret-Zuständigkeiten abrufbar",
+            "Klar dokumentiert, wer AIRTABLE_PAT, HOOK_SECRET und ALERT_WEBHOOK_URL einträgt",
+        ],
+    },
+    {
+        "version": "1.4.0",
+        "date": "2026-10-29",
+        "changes": ["application_create: neue Bewerbung anlegen, mit Dubletten-Schutz (409)"],
+    },
+    {
+        "version": "1.3.0",
+        "date": "2026-10-29",
+        "changes": [
+            "Alle Parameter beschrieben (Function Calling)",
+            "apply über /hooks/airtable ohne HOOK_SECRET gesperrt (401)",
+        ],
+    },
+    {
+        "version": "1.2.0",
+        "date": "2026-10-29",
+        "changes": [
+            "hook_test, config_get/config_set, table_create/field_create/field_update",
+        ],
+    },
+    {
+        "version": "1.1.0",
+        "date": "2026-10-29",
+        "changes": ["audit_list, error_log, alerts_list, data_health, Alarm-Webhook"],
+    },
+    {
+        "version": "1.0.0",
+        "date": "2026-10-29",
+        "changes": ["Erste Version: Suche, Akte, Schreiben, Uploads, Automatik"],
+    },
+]
+
 _schema_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 _ACTOR: ContextVar[str] = ContextVar("actor", default="api")
 
@@ -1703,6 +1746,50 @@ async def tool_field_update(m: FieldUpdateInput) -> dict[str, Any]:
     return {"success": True, "field": result}
 
 
+class ServiceInfoInput(BaseModel):
+    pass
+
+
+async def tool_service_info(m: ServiceInfoInput) -> dict[str, Any]:
+    logger.info("STEPLOG START service_info")
+    config = await _config()
+    webhook = await _effective("alert_webhook_url")
+    hook = await _effective("hook_secret")
+    pat = bool((os.environ.get("AIRTABLE_PAT") or "").strip())
+    return {
+        "service": "Ilvana Airtable MCP",
+        "version": SERVICE_VERSION,
+        "tool_count": len(MODELS),
+        "tool_names": list(MODELS),
+        "changelog": SERVICE_CHANGELOG,
+        "default_base": config.get("default_base") or "kopieren",
+        "secrets": {
+            "AIRTABLE_PAT": {
+                "configured": pat,
+                "entered_by": "Mensch (Kontoinhaber) — niemals ein Agent",
+                "where": "CodeWords → Projekt → Integrations-Panel, Feld AIRTABLE_PAT",
+                "note": "Über Werkzeuge nicht änderbar. Wert kommt aus Airtable (Developer hub → Token, Beginnt mit pat…).",
+            },
+            "HOOK_SECRET": {
+                "configured": bool(hook),
+                "entered_by": "Mensch legt den Wert fest (z.B. openssl rand -hex 32); Agent darf ihn setzen, kennt ihn danach aber nicht mehr",
+                "where": "Integrations-Panel ODER config_set {\"hook_secret\": \"…\"}; derselbe Wert zusätzlich in der Airtable-Automation als Header X-Hook-Secret",
+                "note": "Ohne Secret ist /hooks/airtable im Modus apply gesperrt (401).",
+            },
+            "ALERT_WEBHOOK_URL": {
+                "configured": bool(webhook),
+                "entered_by": "Mensch besorgt die Adresse bei der eigenen Plattform; Agent darf sie setzen und auslesen (maskiert)",
+                "where": "Integrations-Panel ODER config_set {\"alert_webhook_url\": \"https://…\"}",
+                "note": "Ohne URL werden Alarme nur gespeichert (alerts_list).",
+            },
+        },
+        "upgrade_hint": (
+            "Merke dir 'version'. Ist die Version hier neuer als deine gemerkte, lies 'changelog' und lade "
+            "skills/ilvana-airtable/SKILL.md neu — sonst arbeitest du mit veralteten Regeln."
+        ),
+    }
+
+
 MODELS: dict[str, Any] = {
     "schema_get": SchemaGetInput,
     "candidates_search": CandidatesSearchInput,
@@ -1733,6 +1820,7 @@ MODELS: dict[str, Any] = {
     "table_create": TableCreateInput,
     "field_create": FieldCreateInput,
     "field_update": FieldUpdateInput,
+    "service_info": ServiceInfoInput,
 }
 
 IMPL: dict[str, Any] = {
@@ -1765,6 +1853,7 @@ IMPL: dict[str, Any] = {
     "table_create": tool_table_create,
     "field_create": tool_field_create,
     "field_update": tool_field_update,
+    "service_info": tool_service_info,
 }
 
 TOOL_DOCS: dict[str, str] = {
@@ -1797,6 +1886,7 @@ TOOL_DOCS: dict[str, str] = {
     "table_create": "Neue Tabelle in der Base anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
     "field_create": "Neues Feld in einer Tabelle anlegen (Vorschau zuerst, echtes Anlegen nur mit confirm).",
     "field_update": "Feld umbenennen oder Auswahlwerte ändern (Vorschau zuerst, echte Änderung nur mit confirm).",
+    "service_info": "Version, Werkzeugliste, Änderungsverlauf und die Zuständigkeit für die drei Secrets (AIRTABLE_PAT, HOOK_SECRET, ALERT_WEBHOOK_URL). Nach jedem Verbinden einmal aufrufen.",
 }
 
 
@@ -2237,6 +2327,12 @@ async def field_update(
                                        "base": base, "preview": preview, "confirm": confirm})
 
 
+@fast_app.tool()
+async def service_info() -> dict[str, Any]:
+    """Version, Änderungen und Secret-Zuständigkeiten — beim Verbinden einmal aufrufen."""
+    return await _mcp("service_info", {})
+
+
 # ---------------------------------------------------------------- FastAPI app
 def create_fastapi_app() -> FastAPI:
     starlette_app = fast_app.streamable_http_app()
@@ -2276,7 +2372,7 @@ def create_fastapi_app() -> FastAPI:
 
     @app.get("/health")
     async def health() -> JSONResponse:
-        return JSONResponse(content={"status": "ok", "tools": len(MODELS), "bases": BASE_LABEL})
+        return JSONResponse(content={"status": "ok", "version": SERVICE_VERSION, "tools": len(MODELS), "bases": BASE_LABEL})
 
     @app.get("/schema/tools")
     async def tool_definitions() -> JSONResponse:
@@ -2384,6 +2480,7 @@ def create_fastapi_app() -> FastAPI:
             content={
                 "success": True,
                 "service": "Ilvana Airtable MCP",
+                "version": SERVICE_VERSION,
                 "tools": list(MODELS),
                 "usage": "POST /tools/<name> mit JSON-Body, oder MCP unter /mcp/",
             }
