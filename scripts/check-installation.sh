@@ -37,7 +37,7 @@ echo "1) Dienst"
 grep -q '"status":"ok"' "$tmp/health" && ok "health" || bad "health nicht erreichbar"
 version=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["version"])' "$tmp/health" 2>/dev/null || echo "?")
 count=$(python3 -c 'import json,sys;print(len(json.load(open(sys.argv[1]))["tools"]))' "$tmp/tools" 2>/dev/null || echo 0)
-[ "$count" -ge 30 ] && ok "Version $version, $count Werkzeuge" || bad "nur $count Werkzeuge (erwartet 30+)"
+[ "$count" -ge 31 ] && ok "Version $version, $count Werkzeuge" || bad "nur $count Werkzeuge (erwartet 31)"
 
 echo "2) Secrets"
 info=$(cat "$tmp/info")
