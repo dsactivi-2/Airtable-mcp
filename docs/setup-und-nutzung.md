@@ -29,7 +29,7 @@ openssl rand -hex 32
 ```
 
 Er muss nirgends „beantragt“ werden. Er ist nur ein gemeinsames Passwort zwischen Airtable und dem
-Dienst: der Dienst akzeptiert den Hook-Aufruf nur, wenn der Header `X-Hook-Secret` exakt diesen Wert
+Dienst: der Dienst akzeptiert den Hook-Aufruf nur, wenn das Feld `hook_secret` im JSON-Body exakt diesen Wert
 enthält.
 
 Wichtig: Ist `HOOK_SECRET` **leer**, ist `/hooks/airtable` offen — dann kann jeder mit der Dienst-URL
@@ -256,7 +256,7 @@ Ohne diesen Header protokolliert der Dienst die Aufrufer-ID der Plattform.
 | `401 Authentication required` | Key fehlt oder falscher Header (`Authorization: Bearer …`) |
 | `406 Not Acceptable` bei `/mcp/` | roher curl statt MCP-Client — der Client muss `Accept: application/json, text/event-stream` senden |
 | `Kein Zugriff auf diese Airtable-Base` | Base fehlt im Airtable-Token unter Access |
-| `Ungültiges Hook-Secret` | `X-Hook-Secret` fehlt oder weicht von `HOOK_SECRET` ab |
+| `Ungültiges Hook-Secret` | Feld `hook_secret` fehlt im Body oder weicht von `HOOK_SECRET` ab |
 | `Nicht schreibbare Felder …` | Formel/Verknüpfung/Anhang angesprochen — erlaubte Felder stehen in der Meldung |
 | Alarme kommen nicht an | `ALERT_WEBHOOK_URL` leer → nur gespeichert; `alerts_list` zeigt `webhook_configured` |
 
@@ -333,7 +333,7 @@ Löschen ist weiterhin nicht möglich; ein versehentlich angelegter Datensatz wi
 | Secret | Wer | Wo | Warum |
 |---|---|---|---|
 | `AIRTABLE_PAT` | nur ein Mensch (Kontoinhaber) | CodeWords → Projekt → Integrations-Panel | Zugriff auf die Bases. Agenten fragen **nie** danach. |
-| `HOOK_SECRET` | Mensch legt den Wert fest, Agent darf ihn setzen | Panel **oder** `config_set`; derselbe Wert in der Airtable-Automation als `X-Hook-Secret` | ohne Secret ist `apply` gesperrt |
+| `HOOK_SECRET` | Mensch legt den Wert fest, Agent darf ihn setzen | Panel **oder** `config_set`; derselbe Wert in der Airtable-Automation als Feld `hook_secret` im Body | ohne Secret ist `apply` gesperrt |
 | `ALERT_WEBHOOK_URL` | Mensch besorgt die Adresse, Agent darf sie setzen | Panel **oder** `config_set` | ohne URL nur gespeicherte Alarme |
 
 Selbstauskunft des Dienstes: `POST /tools/service_info` zeigt Version, Änderungsverlauf und genau diese
