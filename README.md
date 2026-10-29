@@ -124,7 +124,7 @@ Details: [references/config-and-hooks.md](skills/ilvana-airtable/references/conf
 - Prompt za AI video uputstvo: [docs/video-prompt.md](docs/video-prompt.md)
 
 
-## Werkzeuge (29)
+## Werkzeuge (30)
 
 **Lesen (9)** — `schema_get`, `candidates_search`, `applications_search`, `candidate_dossier`,
 `application_get`, `documents_list`, `casting_ratings_list`, `pipeline_summary`, `due_report`
@@ -134,8 +134,8 @@ Details: [references/config-and-hooks.md](skills/ilvana-airtable/references/conf
 
 **Automatik (3)** — `automation_rules`, `automation_run`, `automation_log`
 
-**Betrieb (7)** — `audit_list`, `error_log`, `alerts_list`, `data_health`, `hook_test`,
-`config_get`, `config_set`
+**Betrieb (8)** — `audit_list`, `error_log`, `alerts_list`, `data_health`, `hook_test`,
+`config_get`, `config_set`, `service_info`
 
 **Struktur (3)** — `table_create`, `field_create`, `field_update`
 
