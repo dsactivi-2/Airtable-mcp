@@ -11,6 +11,16 @@
 
 Im Repository stehen **keine** echten Werte. `.env.example` enthält nur Platzhalter, die CI prüft das.
 
+## Wer trägt welches Geheimnis ein
+
+| Geheimnis | Verantwortlich | Eintragung |
+|---|---|---|
+| `AIRTABLE_PAT` | Kontoinhaber (Mensch) | Integrations-Panel — nicht über Werkzeuge |
+| `HOOK_SECRET` | Mensch legt Wert fest, Agent darf setzen | Panel oder `config_set`, zusätzlich in Airtable |
+| `ALERT_WEBHOOK_URL` | Mensch besorgt, Agent darf setzen | Panel oder `config_set` |
+
+`POST /tools/service_info` liefert diese Tabelle mit Status, damit Agenten nicht raten müssen.
+
 ## Schutzmechanismen im Dienst
 
 - **Auth:** jeder Aufruf braucht einen gültigen Bearer-Key der Plattform.
