@@ -1,35 +1,38 @@
 # AGENTS.md
 
 Dieses Repository enthält den **Ilvana Airtable MCP**: einen Dienst, der die Bewerber-Datenbank
-der Ilvana i Hase über MCP und über eine JSON-HTTP-API zugänglich macht.
+der Ilvana i Hase über MCP und über eine JSON-HTTP-API zugänglich macht — inklusive Automatik,
+Protokoll, Konfiguration und Base-Änderungen.
 
-## Für Agenten, die hier arbeiten
+## Für Agenten
 
-Bevor du Felder liest oder schreibst, lade das Skill:
+Lies zuerst:
 
 ```
-skills/ilvana-airtable/SKILL.md
+skills/README.md          → welches Skill für welches Framework
+skills/ilvana-airtable/SKILL.md   → gemeinsame Grundlage, 28 Werkzeuge
 ```
 
-Es verweist auf:
+Framework-spezifisch:
 
-- `references/schema.md` — alle Tabellen, Felder, Typen, Auswahlwerte, schreibbar ja/nein (aus Airtable erzeugt)
-- `references/filtering.md` — jede Suche und jeder Filter mit JSON-Beispielen
-- `references/tags.md` — welche Tags zu welcher Prozessstufe gehören, wann sie gesetzt werden, was Airtable automatisch berechnet
-- `references/automation.md` — Regeln, Tagesbericht, Doppel-Auslöser, Protokoll
-- `references/good-to-have.md` — offene Verbesserungen
+- Hermes Agent → `skills/frameworks/hermes/SKILL.md`
+- Codex → `skills/frameworks/codex/SKILL.md`
+- ChatGPT (Web) → `skills/frameworks/chatgpt/SKILL.md`
+- Grok (Web) → `skills/frameworks/grok/SKILL.md`
 
-## Kurzfassung der Regeln
+## Kurzfassung
 
 1. Erst lesen (`candidate_dossier`), dann schreiben.
-2. Nur schreibbare Felder setzen; Auswahlwerte exakt treffen.
+2. Nur schreibbare Felder, Auswahlwerte exakt.
 3. Notizen anhängen, nie überschreiben.
 4. Massenänderung: Vorschau, dann `dry_run=false` **und** `confirm=true`.
-5. `base=kopieren` ist Standard; `original` nur auf ausdrückliche Anweisung.
-6. Nichts löschen — der Dienst kann es nicht, und das bleibt so.
+5. Struktur-Änderungen: erst `preview=true`, dann `confirm=true`.
+6. `base=kopieren` ist Standard; `original` nur auf Anweisung.
+7. Nichts löschen — der Dienst kann es nicht.
 
-## Einstieg für Menschen
+## Für Menschen
 
 - Betrieb: CodeWords-Service `ilvana_airtable_mcp_8b158ec7`
+- Einrichtung: `docs/setup-und-nutzung.md`
+- Verbindung je Agent: `docs/verbindung-agenten.md`
 - Quelle: `ilvana_airtable_mcp.py`
-- Funktionsdefinitionen: `GET /schema/tools`
