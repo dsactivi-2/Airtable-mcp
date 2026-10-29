@@ -1,0 +1,53 @@
+name: status
+
+on:
+  schedule:
+    - cron: "0 * * * *"      # stündlich
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: status
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Secret vorhanden?
+        id: gate
+        env:
+          KEY: ${{ secrets.CODEWORDS_API_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::warning::Repository-Secret CODEWORDS_API_KEY fehlt — Status wird nicht erzeugt."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Status erzeugen
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          CODEWORDS_API_KEY: ${{ secrets.CODEWORDS_API_KEY }}
+        run: python scripts/status_report.py || true
+
+      - name: Änderungen committen
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add status/
+          if git diff --cached --quiet; then
+            echo "keine Änderung"
+          else
+            git commit -m "chore(status): automatischer Statusbericht"
+            git push
+          fi
