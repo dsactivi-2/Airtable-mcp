@@ -1,85 +1,85 @@
 ---
 name: ilvana-airtable
-description: Kandidaten-CRM der Ilvana i Hase GbR in Airtable. Lesen, suchen, filtern, schreiben, Dokumente hochladen und Automatik steuern — über MCP oder JSON-HTTP.
+description: Kandidaten-CRM der Ilvana i Hase in Airtable — lesen, suchen, filtern, schreiben, Dokumente hochladen, Automatik steuern, konfigurieren und die Base-Struktur erweitern. 28 Werkzeuge über MCP oder JSON-HTTP.
 ---
 
-# Ilvana Airtable — Skill
+# Ilvana Airtable — Kern-Skill
 
-Dieses Skill macht einen Agenten produktiv mit der Bewerber-Datenbank. Es beschreibt **was** drin ist,
-**wie** gefiltert wird, **welche Tags** wann gesetzt werden, was Airtable **automatisch** berechnet und
-was der Agent selbst tun muss.
+Bewerbungsprozess Westbalkan → Deutschland: Bewerbung → Casting → Vertrag → Predsaglasnost → Visum →
+Arbeitsbeginn. Zwei Bases, identischer Aufbau:
 
-## Wofür
-
-Bewerbungsprozess für Arbeitskräfte aus dem Westbalkan nach Deutschland: Bewerbung → Casting → Vertrag →
-Predsaglasnost → Visum → Arbeitsbeginn. Zwei Bases mit identischem Aufbau:
-
-- `kopieren` — **Standard**, Arbeitsbase (108 Bewerbungen)
-- `original` — Produktionsbase (100 Bewerbungen), nur auf ausdrückliche Anweisung beschreiben
+- `kopieren` — Standard (108 Bewerbungen)
+- `original` — Produktion (100 Bewerbungen), nur auf ausdrückliche Anweisung
 
 ## Verbindung
 
-Der Dienst heißt **Ilvana Airtable MCP** (`ilvana_airtable_mcp_8b158ec7`).
-
-| Client | Weg |
+| Ding | Wert |
 |---|---|
-| Hermes Agent (MCP) | MCP-Endpunkt des Dienstes unter `/mcp/`, Header `Authorization: Bearer <CODEWORDS_API_KEY>` |
-| Codex / CLI | `POST <Dienst-URL>/tools/<werkzeug>` mit JSON-Body |
-| ChatGPT / Grok (web) | REST-Endpunkte als Action; Werkzeugdefinitionen unter `GET /schema/tools` (OpenAI-Format) |
-| n8n / eigene App | dieselben JSON-Endpunkte |
+| Basis-URL | `https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7` |
+| MCP | dieselbe URL + `/mcp/` |
+| Auth | `Authorization: Bearer <CODEWORDS_API_KEY>` |
+| Funktionsdefinitionen | `GET /schema/tools` (OpenAI-Format) |
+| OpenAPI | `openapi/ilvana-airtable.openapi.json` im Repo |
 
-Wichtig: `GET /schema/tools` liefert die vollständigen Funktionsdefinitionen. Arbeite **immer** damit,
-statt Parameter zu raten.
+Der Airtable-Schlüssel liegt im Dienst — kein Agent braucht ihn.
 
 ## Goldene Regeln
 
-1. **Erst lesen, dann schreiben.** Vor jeder Änderung `candidate_dossier` oder `applications_search` aufrufen.
-2. **Nie Feldnamen raten.** Nicht schreibbare Felder (Formeln, Verknüpfungen, Anhänge) lehnt der Dienst mit
-   einer Liste der erlaubten Felder ab. Siehe `references/schema.md`.
-3. **Auswahlwerte exakt treffen.** `Počeo sa radom ` enthält ein Leerzeichen am Ende; `ODBIJEN` ist Großschreibung.
-4. **Notizen anhängen, nicht überschreiben** — dafür `application_add_note` nutzen.
-5. **Massenänderung nur mit Vorschau:** `dry_run=true` (Standard) prüfen, dann `dry_run=false` **und** `confirm=true`. Max. 50 Datensätze.
-6. **Original-Base nur nennen, wenn der Nutzer sie ausdrücklich will** (`base=original`).
-7. **Nichts löschen.** Der Dienst kennt kein Löschen — das ist Absicht.
-8. **Unsicherheiten benennen**, nicht glattbügeln: fehlende Unterlagen, doppelte Telefonnummern, unklare Status.
+1. **Erst lesen, dann schreiben** (`candidate_dossier` vor jeder Änderung).
+2. **Nie Feldnamen raten.** Nicht schreibbare Felder stehen in `references/schema.md`.
+3. **Auswahlwerte exakt.** `Počeo sa radom ` hat ein Leerzeichen am Ende, `ODBIJEN` ist Großschreibung.
+4. **Notizen anhängen**, nie überschreiben (`application_add_note`).
+5. **Massenänderung:** `dry_run=true` prüfen, dann `dry_run=false` **und** `confirm=true`, max. 50.
+6. **Struktur-Änderungen** (Tabelle/Feld) immer erst `preview=true`, dann `confirm=true`.
+7. **Original-Base nur nennen**, wenn der Nutzer sie ausdrücklich will.
+8. **Nichts löschen** — der Dienst kann es nicht, das bleibt so.
+9. **Unsicherheit benennen** statt glätten: fehlende Unterlagen, doppelte Nummern, unklare Status.
 
-## Die vier Kernwerkzeuge
+## Werkzeuge in Gruppen
 
-```json
-// Wer ist das? Name, Handy, Festnetz, Kundennummer, Passnummer
-POST /tools/candidates_search
-{"query": "Mihaljevic", "phone": "+387 61 614 368", "limit": 10}
-```
+**Lesen (9)** — `schema_get`, `candidates_search`, `applications_search`, `candidate_dossier`,
+`application_get`, `documents_list`, `casting_ratings_list`, `pipeline_summary`, `due_report`
 
-```json
-// Komplette Akte als ein JSON — der Vorab-Abruf vor einem Anruf
-POST /tools/candidate_dossier
-{"record_id": "recuQxflPVccPo9xT"}
-```
+**Schreiben (6)** — `application_update`, `applications_bulk_update`, `application_add_note`,
+`casting_rating_upsert`, `document_upload`, `tasks_manage`
 
-```json
-// Filter nach Status, Terminen, Fristen, fehlenden Unterlagen
-POST /tools/applications_search
-{"status_kandidata": "Casting", "only_overdue": true, "limit": 25}
-```
+**Automatik (3)** — `automation_rules`, `automation_run`, `automation_log`
+
+**Betrieb (6)** — `audit_list`, `error_log`, `alerts_list`, `data_health`, `hook_test`,
+`config_get`/`config_set`
+
+**Struktur (3)** — `table_create`, `field_create`, `field_update`
+
+## Die vier Kernaufrufe
 
 ```json
-// Schreiben mit Protokoll-Notiz
-POST /tools/application_update
-{"record_id": "rec...", "fields": {"Status kandidata": "Primljeni"}, "note": "Casting bestanden"}
+POST /tools/candidates_search   {"query": "Mihaljevic", "phone": "+387 61 614 368"}
+POST /tools/candidate_dossier    {"record_id": "recuQxflPVccPo9xT"}
+POST /tools/applications_search  {"status_kandidata": "Casting", "only_overdue": true}
+POST /tools/application_update   {"record_id": "rec…", "fields": {"Status kandidata": "Primljeni"}, "note": "bestanden"}
 ```
 
-## Wohin gehört welches Wissen
+## Was der Agent selbst konfigurieren darf
+
+- Alarm-Webhook und Hook-Secret (`config_set`) — wirkt sofort, kein Redeploy
+- Standard-Base (`config_set default_base`)
+- Automatik-Regeln (`automation_rules set`)
+- Base-Struktur: Tabellen und Felder anlegen/ändern (mit Vorschau)
+
+**Nicht** über den Agenten änderbar: `AIRTABLE_PAT` (nur Platform-Panel) und das Löschen von Daten.
+
+## Referenzen
 
 | Thema | Datei |
 |---|---|
-| Alle Tabellen, Felder, Typen, Auswahlwerte, schreibbar ja/nein | `references/schema.md` |
-| Jeder Filter, jede Suche, Paginierung, Massenänderung | `references/filtering.md` |
-| Tag-System: welches Tag gehört zu welcher Prozessstufe, wann setzen, wann entfernen | `references/tags.md` |
-| Automatik: Regeln, Tagesbericht, Doppel-Auslöser, Protokoll | `references/automation.md` |
-| Was fehlt noch, was wäre sinnvoll | `references/good-to-have.md` |
+| Felder, Typen, Auswahlwerte | `references/schema.md` |
+| Suche und Filter | `references/filtering.md` |
+| Tags, Stufen, automatische Felder | `references/tags.md` |
+| Automatik und Tageslauf | `references/automation.md` |
+| Konfiguration, Hook-Test, Base-Änderungen | `references/config-and-hooks.md` |
+| Verbesserungsvorschläge | `references/good-to-have.md` |
 
 ## Antwortstil
 
-Antworte in der Sprache des Nutzers (meist Deutsch), mit Klarnamen statt Record-IDs. Bei Listen: Name,
-Status, nächste Aktion, Frist — keine Feld-Wüsten. Immer sagen, **was** geändert wurde und **wo**.
+Sprache des Nutzers (meist Deutsch), Klarnamen statt Record-IDs, bei Listen: Name, Status, nächste
+Aktion, Frist. Immer sagen, was geändert wurde und wo.
