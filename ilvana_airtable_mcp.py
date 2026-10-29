@@ -79,8 +79,16 @@ EARLY_STATUSES = {"Zainteresiran", "Zeleni / obrada"}
 TZ = ZoneInfo("Europe/Sarajevo")
 SCHEMA_TTL = 300
 
-SERVICE_VERSION = "1.5.6"
+SERVICE_VERSION = "1.5.7"
 SERVICE_CHANGELOG: list[dict[str, Any]] = [
+    {
+        "version": "1.5.7",
+        "date": "2026-10-29",
+        "changes": [
+            "OpenAPI enthält wieder den Root-Endpunkt POST / mit Request- und Response-Schema (Run-Seite rendert damit)",
+            "POST /automation/daily und components.schemas ergänzt",
+        ],
+    },
     {
         "version": "1.5.6",
         "date": "2026-10-29",
@@ -2561,6 +2569,55 @@ def _build_openapi() -> dict[str, Any]:
             "responses": {"200": {"description": "status, version, tools"}},
         }
     }
+
+    root_request = RootRequest.model_json_schema()
+    root_request.pop("$defs", None)
+    root_request.pop("title", None)
+    root_response = RootResponse.model_json_schema()
+    root_response.pop("$defs", None)
+    root_response.pop("title", None)
+    daily_request = DailyRunRequest.model_json_schema()
+    daily_request.pop("$defs", None)
+    daily_request.pop("title", None)
+
+    schemas: dict[str, Any] = {
+        "RootRequest": root_request,
+        "RootResponse": root_response,
+        "DailyRunRequest": daily_request,
+    }
+
+    paths["/"] = {
+        "post": {
+            "operationId": "run",
+            "summary": "Dienstinfo abrufen oder ein Werkzeug direkt ausführen",
+            "description": (
+                "Ohne tool liefert der Aufruf Dienstname, Version und Werkzeugliste. "
+                "Mit tool und arguments wird das jeweilige Werkzeug ausgeführt."
+            ),
+            "requestBody": {
+                "required": False,
+                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RootRequest"}}},
+            },
+            "responses": {
+                "200": {
+                    "description": "Dienstinfo oder Ergebnis des Werkzeugs",
+                    "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RootResponse"}}},
+                }
+            },
+        }
+    }
+
+    paths["/automation/daily"] = {
+        "post": {
+            "operationId": "automation_daily",
+            "summary": "Tagesbericht, Automatik und Datenqualität in einem Lauf",
+            "requestBody": {
+                "required": False,
+                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DailyRunRequest"}}},
+            },
+            "responses": {"200": {"description": "report, automation und health"}},
+        }
+    }
     return {
         "openapi": "3.1.0",
         "info": {
@@ -2580,7 +2637,8 @@ def _build_openapi() -> dict[str, Any]:
                     "scheme": "bearer",
                     "description": "CodeWords API Key",
                 }
-            }
+            },
+            "schemas": schemas,
         },
         "paths": paths,
     }
