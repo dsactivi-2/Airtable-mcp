@@ -79,8 +79,16 @@ EARLY_STATUSES = {"Zainteresiran", "Zeleni / obrada"}
 TZ = ZoneInfo("Europe/Sarajevo")
 SCHEMA_TTL = 300
 
-SERVICE_VERSION = "1.5.0"
+SERVICE_VERSION = "1.5.1"
 SERVICE_CHANGELOG: list[dict[str, Any]] = [
+    {
+        "version": "1.5.1",
+        "date": "2026-10-29",
+        "changes": [
+            "Hook-Secret wird als Feld 'hook_secret' im JSON-Body erwartet (Gateway entfernt den Header X-Hook-Secret)",
+            "hook_test zeigt den Aufruf mit Secret im Body",
+        ],
+    },
     {
         "version": "1.5.0",
         "date": "2026-10-29",
@@ -1607,10 +1615,11 @@ async def tool_hook_test(m: HookTestInput) -> dict[str, Any]:
     )
     hook_url = "https://runtime.codewords.ai/run/ilvana_airtable_mcp_8b158ec7/hooks/airtable"
     body = {"record_id": record_id or "rec...", "mode": "preview", "event": "Verbindungstest"}
+    if secret_set:
+        body["hook_secret"] = "<dein HOOK_SECRET>"
     curl = (
         f"curl -X POST {hook_url} -H 'Content-Type: application/json' "
-        + ("-H 'X-Hook-Secret: <dein HOOK_SECRET>' " if secret_set else "")
-        + f"-H 'Authorization: Bearer <CODEWORDS_API_KEY>' -d '{json.dumps(body)}'"
+        f"-H 'Authorization: Bearer <CODEWORDS_API_KEY>' -d '{json.dumps(body)}'"
     )
     return {
         "ok": True,
@@ -1621,8 +1630,8 @@ async def tool_hook_test(m: HookTestInput) -> dict[str, Any]:
         else "HOOK_SECRET ist nicht gesetzt — /hooks/airtable ist offen und kann von jedem aufgerufen werden.",
         "headers": {
             "Content-Type": "application/json",
-            "X-Hook-Secret": "<HOOK_SECRET>" if secret_set else "(nicht gesetzt)",
             "Authorization": "Bearer <CODEWORDS_API_KEY>",
+            "Hinweis": "Das Secret gehört als Feld 'hook_secret' in den JSON-Body — Header werden vom Gateway entfernt.",
         },
         "sample_body": body,
         "curl": curl,
@@ -1773,7 +1782,7 @@ async def tool_service_info(m: ServiceInfoInput) -> dict[str, Any]:
             "HOOK_SECRET": {
                 "configured": bool(hook),
                 "entered_by": "Mensch legt den Wert fest (z.B. openssl rand -hex 32); Agent darf ihn setzen, kennt ihn danach aber nicht mehr",
-                "where": "Integrations-Panel ODER config_set {\"hook_secret\": \"…\"}; derselbe Wert zusätzlich in der Airtable-Automation als Header X-Hook-Secret",
+                "where": "Integrations-Panel ODER config_set {\"hook_secret\": \"…\"}. Beim Aufruf von /hooks/airtable als Feld 'hook_secret' im JSON-Body mitsenden (Header werden vom Gateway entfernt) und in der Airtable-Automation genauso eintragen.",
                 "note": "Ohne Secret ist /hooks/airtable im Modus apply gesperrt (401).",
             },
             "ALERT_WEBHOOK_URL": {
@@ -2432,13 +2441,22 @@ def create_fastapi_app() -> FastAPI:
     @app.post("/hooks/airtable")
     async def airtable_hook(request: Request) -> JSONResponse:
         secret = await _effective("hook_secret")
-        if secret and request.headers.get("X-Hook-Secret") != secret:
-            return JSONResponse(status_code=401, content={"success": False, "error": "Ungültiges Hook-Secret"})
         try:
             body = await request.json()
         except Exception:  # noqa: BLE001
             body = {}
-        payload = AirtableHookRequest(**body) if isinstance(body, dict) else AirtableHookRequest()
+        if not isinstance(body, dict):
+            body = {}
+        provided = str(request.headers.get("X-Hook-Secret") or body.get("hook_secret") or "").strip()
+        if secret and provided != secret:
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "success": False,
+                    "error": "Ungültiges Hook-Secret. Sende es als Header 'X-Hook-Secret' oder als Feld 'hook_secret' im JSON.",
+                },
+            )
+        payload = AirtableHookRequest(**body)
         if payload.mode == "apply" and not secret:
             return JSONResponse(
                 status_code=401,
