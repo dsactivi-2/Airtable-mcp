@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ilvana Airtable MCP",
-    "version": "1.5.1",
-    "description": "Kandidaten-CRM: Suche, Akte, Anlegen, Ändern, Uploads, Automatik, Protokoll, Konfiguration, Base-Änderungen."
+    "version": "1.5.2",
+    "description": "Kandidaten-CRM: Suche, Akte, Anlegen, Ändern, Uploads, Automatik, Protokoll, Alarme, Konfiguration, Base-Änderungen."
   },
   "servers": [
     {
