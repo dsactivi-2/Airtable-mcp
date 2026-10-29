@@ -1,6 +1,6 @@
 ---
 name: ilvana-airtable
-description: Kandidaten-CRM der Ilvana i Hase in Airtable — lesen, suchen, filtern, schreiben, Dokumente hochladen, Automatik steuern, konfigurieren und die Base-Struktur erweitern. 29 Werkzeuge über MCP oder JSON-HTTP.
+description: Kandidaten-CRM der Ilvana i Hase in Airtable — lesen, suchen, filtern, schreiben, Dokumente hochladen, Automatik steuern, konfigurieren und die Base-Struktur erweitern. 30 Werkzeuge über MCP oder JSON-HTTP.
 ---
 
 # Ilvana Airtable — Kern-Skill
@@ -85,3 +85,33 @@ POST /tools/application_create   {"fields": {"Ime i prezime": "…", "Broj telef
 
 Sprache des Nutzers (meist Deutsch), Klarnamen statt Record-IDs, bei Listen: Name, Status, nächste
 Aktion, Frist. Immer sagen, was geändert wurde und wo.
+
+
+## Beim Verbinden zuerst `service_info`
+
+```json
+POST /tools/service_info {}
+```
+
+Antwort enthält `version`, `tool_count`, `tool_names`, `changelog` und `secrets` (mit `configured`,
+`entered_by`, `where`). Merke dir `version`.
+
+## Wer trägt welches Secret ein
+
+| Secret | Wer | Wo | Warum |
+|---|---|---|---|
+| `AIRTABLE_PAT` | **nur ein Mensch** (Kontoinhaber) | CodeWords → Projekt → Integrations-Panel | Zugriff auf die Bases; über Werkzeuge **nicht** änderbar |
+| `HOOK_SECRET` | Mensch legt den Wert fest; Agent darf ihn setzen | Panel **oder** `config_set` — derselbe Wert zusätzlich in der Airtable-Automation als `X-Hook-Secret` | ohne Secret ist `apply` auf `/hooks/airtable` gesperrt |
+| `ALERT_WEBHOOK_URL` | Mensch besorgt die Adresse; Agent darf sie setzen | Panel **oder** `config_set` | ohne URL werden Alarme nur gespeichert |
+
+Ein Agent darf **nie** nach `AIRTABLE_PAT` fragen — er bekommt ihn nicht und braucht ihn nicht.
+
+## Update merken
+
+Rufe `service_info` bei jedem Start auf. Ist `version` neuer als deine gemerkte Version:
+
+1. lies `changelog` (nur die Einträge über deiner Version),
+2. lade `skills/ilvana-airtable/SKILL.md` und die Referenzen neu,
+3. prüfe `tool_names` — neue Werkzeuge können dazugekommen sein.
+
+So arbeitet kein Agent mit veralteten Regeln.
