@@ -14,7 +14,7 @@ echo "  ok"
 
 echo "2/3 Werkzeugliste"
 count=$(curl -s -H "$AUTH" "$BASE/schema/tools" | python3 -c 'import sys,json; print(len(json.load(sys.stdin)["tools"]))')
-[ "$count" -ge 28 ] || { echo "  FAIL nur $count Werkzeuge"; exit 1; }
+[ "$count" -ge 31 ] || { echo "  FAIL nur $count Werkzeuge"; exit 1; }
 echo "  ok ($count Werkzeuge)"
 
 echo "3/3 Lesetest"
