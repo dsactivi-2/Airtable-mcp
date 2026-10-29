@@ -78,25 +78,7 @@ Der Dienst laeuft als CodeWords-Service (FastAPI + FastMCP). Der Tageslauf ist a
 Vollstaendige Feldreferenz: [docs/airtable-schema.md](docs/airtable-schema.md)
 
 
-## Protokoll, Fehler und Alarme
+## Einrichtung
 
-| Werkzeug | Zweck |
-|---|---|
-| `audit_list` | Verlauf: welcher Aufrufer hat wann welches Werkzeug auf welchem Datensatz ausgeführt |
-| `error_log` | fehlgeschlagene Aufrufe mit Ursache und Status |
-| `alerts_list` | gespeicherte Alarme inkl. Hinweis, ob ein Alarm-Webhook konfiguriert ist |
-| `data_health` | Qualitätsprüfung: ohne Status, ohne nächste Aktion, überfällig, fehlende Unterlagen, verpasste Termine, doppelte Telefonnummern |
-
-Aufrufer (`actor`) kommt aus dem Header `X-Actor` bzw. `X-Client`; ohne Header nutzt der Dienst die Aufrufer-ID der Plattform.
-
-`ALERT_WEBHOOK_URL` (optional): Ist die Variable gesetzt, schickt der Dienst bei Fehlern und Datenauffälligkeiten ein JSON an diese Adresse — die eigene Plattform verteilt es auf Mail, Viber, Messenger oder SMS. Ohne die Variable werden Alarme nur gespeichert.
-
-## Airtable Automation
-
-`POST /hooks/airtable` — eine Airtable-Automation meldet eine Änderung, der Dienst reagiert sofort statt beim nächsten Tageslauf:
-
-```json
-{"record_id": "rec...", "mode": "apply", "event": "Status gewechselt"}
-```
-
-Ist `HOOK_SECRET` gesetzt, ist der Header `X-Hook-Secret` Pflicht.
+Vollständige Anleitung inklusive der drei Variablen (`AIRTABLE_PAT`, `HOOK_SECRET`, `ALERT_WEBHOOK_URL`),
+Agenten-Verbindung und Airtable-Automation: [docs/setup-und-nutzung.md](docs/setup-und-nutzung.md)
