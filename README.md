@@ -101,6 +101,10 @@ Aufrufer (`actor`) kommt aus dem Header `X-Actor` bzw. `X-Client`; ohne Header n
 
 Ist `HOOK_SECRET` gesetzt, muss `hook_secret` im JSON-Body stehen (Header werden entfernt).
 
+## Inbetriebnahme
+
+Schritt-für-Schritt mit Copy-paste-Vorlagen und Prüfroutine: [INSTALL.md](INSTALL.md)
+
 ## Einrichtung
 
 Vollständige Anleitung inklusive der drei Variablen (`AIRTABLE_PAT`, `HOOK_SECRET`, `ALERT_WEBHOOK_URL`),
