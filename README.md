@@ -122,3 +122,41 @@ Details: [references/config-and-hooks.md](skills/ilvana-airtable/references/conf
 
 - Korisničko uputstvo (bosanski): [docs/nutzeranleitung-bs.md](docs/nutzeranleitung-bs.md)
 - Prompt za AI video uputstvo: [docs/video-prompt.md](docs/video-prompt.md)
+
+
+## Werkzeuge (28)
+
+**Lesen (9)** — `schema_get`, `candidates_search`, `applications_search`, `candidate_dossier`,
+`application_get`, `documents_list`, `casting_ratings_list`, `pipeline_summary`, `due_report`
+
+**Schreiben (6)** — `application_update`, `applications_bulk_update`, `application_add_note`,
+`casting_rating_upsert`, `document_upload`, `tasks_manage`
+
+**Automatik (3)** — `automation_rules`, `automation_run`, `automation_log`
+
+**Betrieb (7)** — `audit_list`, `error_log`, `alerts_list`, `data_health`, `hook_test`,
+`config_get`, `config_set`
+
+**Struktur (3)** — `table_create`, `field_create`, `field_update`
+
+## Projektstruktur
+
+```
+ilvana_airtable_mcp.py          der Dienst (FastAPI + FastMCP, PEP 723)
+openapi/                        Action-Definition für ChatGPT und Grok
+skills/                         Agenten-Wissen, pro Framework eine Datei
+docs/                           Einrichtung, Verbindung, Schema, Uputstvo, Video-Prompt
+scripts/smoke.sh                Smoke-Test gegen den laufenden Dienst
+.github/workflows/ci.yml        Syntax, Abhängigkeiten, Werkzeugzahl, STEPLOG, Secret-Scan
+```
+
+## Qualitätschecks
+
+| Prüfung | wo |
+|---|---|
+| Syntax und Abhängigkeiten | CI |
+| Werkzeugzahl = OpenAPI-Operationen | CI |
+| STEPLOG je Werkzeug | CI |
+| keine Schlüssel im Repo | CI |
+| laufender Dienst (health, 28 Werkzeuge, Lesetest) | `scripts/smoke.sh` |
+| Verhalten aller Werkzeuge | siehe `CHANGELOG.md` und `docs/setup-und-nutzung.md` |
