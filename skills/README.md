@@ -1,6 +1,6 @@
 # Skills — Ilvana Airtable
 
-Ein Dienst, 29 Werkzeuge, vier Agenten-Frameworks. Jeder Agent bekommt **eine** Kerndatei und **eine**
+Ein Dienst, 30 Werkzeuge, vier Agenten-Frameworks. Jeder Agent bekommt **eine** Kerndatei und **eine**
 Framework-Datei.
 
 | Framework | Datei | Verbindungsweg |
