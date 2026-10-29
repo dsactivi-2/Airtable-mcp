@@ -113,7 +113,9 @@ In Airtable von Hand löschen (der Dienst darf nicht löschen):
 
 ## 7. Tageslauf scharf stellen
 
-Aktiv: **apply**, täglich 07:00 UTC (`cron(0 7 * * ? *)` — das ist 08:00 Europe/Sarajevo).
+Aktiv: **apply**, täglich **07:00 Ortszeit** (`cron(0 6 * * ? *)` = 06:00 UTC, gilt für Europe/Berlin und Sarajevo).
+
+Ein Cron kennt keine Zeitumstellung: in der Sommerzeit läuft der Job dadurch um **08:00** Ortszeit.
 
 Der Modus steckt im JSON-Body, nicht in der URL (Query-Parameter kommen über die Runtime nicht an):
 
