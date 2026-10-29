@@ -45,8 +45,8 @@ Der Airtable-Schlüssel liegt im Dienst — kein Agent braucht ihn.
 
 **Automatik (3)** — `automation_rules`, `automation_run`, `automation_log`
 
-**Betrieb (6)** — `audit_list`, `error_log`, `alerts_list`, `data_health`, `hook_test`,
-`config_get`/`config_set`
+**Betrieb (8)** — `audit_list`, `error_log`, `alerts_list`, `data_health`, `hook_test`,
+`config_get`, `config_set`, `service_info`
 
 **Struktur (3)** — `table_create`, `field_create`, `field_update`
 
