@@ -59,3 +59,17 @@ nächster Aktion und Frist.
 | `406 Not Acceptable` | Client sendet nicht `Accept: application/json, text/event-stream` — MCP-Client nutzen, nicht curl |
 | Verbindung steht, aber 0 Werkzeuge | falsche URL — `/mcp/` mit Schrägstrich am Ende |
 | Werkzeuge da, Antworten inhaltlich falsch | `SKILL.md` nicht geladen (Feldnamen/Tags unbekannt) |
+
+
+## 6. Werkzeugreferenz
+
+- `tools-reference.md` — alle 31 Werkzeuge mit Parametern, aus den Live-Schemata erzeugt
+- `tools.json` — derselbe Katalog im OpenAI-Format, falls Hermes ihn direkt einliest
+
+## 7. Status prüfen
+
+```bash
+./scripts/monitor.sh
+```
+
+Meldet Version, Werkzeugzahl, MCP-Handshake, aktive Zeitpläne und den Notion-Sync in einem Lauf.
