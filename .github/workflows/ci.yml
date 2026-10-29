@@ -1,0 +1,63 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Syntax
+        run: python -m py_compile ilvana_airtable_mcp.py
+
+      - name: Abhängigkeiten im PEP-723-Kopf gepinnt
+        run: |
+          python - <<'PY'
+          import re, pathlib, sys
+          src = pathlib.Path("ilvana_airtable_mcp.py").read_text()
+          head = src.split("# ///")[1]
+          deps = re.findall(r'"([A-Za-z0-9_.-]+)==([0-9][^"]*)"', head)
+          if not deps:
+              sys.exit("keine gepinnten Abhängigkeiten gefunden")
+          print("gepinnt:", deps)
+          PY
+
+      - name: Werkzeugzahl stimmt mit OpenAPI überein
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          src = pathlib.Path("ilvana_airtable_mcp.py").read_text()
+          tools = src.count("@fast_app.tool()")
+          spec = json.loads(pathlib.Path("openapi/ilvana-airtable.openapi.json").read_text())
+          paths = len(spec["paths"])
+          print("source:", tools, "openapi:", paths)
+          if tools != paths:
+              sys.exit("Werkzeugzahl weicht ab")
+          PY
+
+      - name: Jede Funktion hat STEPLOG
+        run: |
+          python - <<'PY'
+          import re, pathlib, sys
+          src = pathlib.Path("ilvana_airtable_mcp.py").read_text()
+          tools = src.count("@fast_app.tool()")
+          steplogs = len(re.findall(r'logger\.info\("STEPLOG START ', src))
+          print("tools:", tools, "steplogs:", steplogs)
+          if steplogs < tools:
+              sys.exit("STEPLOG fehlt für mindestens ein Werkzeug")
+          PY
+
+      - name: Keine Secrets im Repo
+        run: |
+          if grep -rInE "(pat[A-Za-z0-9]{14,}|sk-[A-Za-z0-9]{20,}|cwk[A-Za-z0-9]{20,})" \
+             --include='*.py' --include='*.md' --include='*.json' --include='*.yml' . ; then
+            echo "Verdacht auf echten Schlüssel"; exit 1
+          fi
+          echo "keine Schlüssel gefunden"
