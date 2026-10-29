@@ -63,7 +63,7 @@ https://cdn.jsdelivr.net/gh/dsactivi-2/Airtable-mcp@main/openapi/ilvana-airtable
 3. Instructions: Inhalt von `integrations/chatgpt/instructions.md`
 
 Details: `integrations/chatgpt/action.md`, `integrations/grok/action.md`.
-ChatGPT erlaubt 30 Operationen pro Action — der Dienst hat genau 30.
+ChatGPT erlaubt 30 Operationen pro Action — der Dienst hat 31, also beim Import eine weglassen (z. B. `schedule_sync`).
 
 ---
 
@@ -149,5 +149,5 @@ export HOOK_SECRET="<hook-secret>"
 ./scripts/check-installation.sh
 ```
 
-Prüft: Version, 30 Werkzeuge, alle drei Secrets, Hook-Sperre ohne Secret und Freigabe mit Secret,
+Prüft: Version, Werkzeugzahl (mindestens 30), alle drei Secrets, Hook-Sperre ohne Secret und Freigabe mit Secret,
 Lesetest auf *Kopieren*, Status der Original-Base. Gibt am Ende `BEREIT` oder eine Liste offener Punkte.
