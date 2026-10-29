@@ -10,7 +10,7 @@ Lies zuerst:
 
 ```
 skills/README.md          → welches Skill für welches Framework
-skills/ilvana-airtable/SKILL.md   → gemeinsame Grundlage, 28 Werkzeuge
+skills/ilvana-airtable/SKILL.md   → gemeinsame Grundlage, 30 Werkzeuge
 ```
 
 Framework-spezifisch:
