@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.2 — 2026-10-29
+
+- Alarme protokollieren die Zustellung: `delivered`, `delivery_status`, `delivery_error`
+- `alerts_list` zeigt damit, ob der Empfänger den Alarm wirklich angenommen hat
+- `ALERT_WEBHOOK_URL` gesetzt — Alarm getestet, HTTP 200
+
 ## 1.5.1 — 2026-10-29
 
 - Hook-Secret wird als Feld `hook_secret` im JSON-Body erwartet (Gateway entfernt `X-Hook-Secret`)
