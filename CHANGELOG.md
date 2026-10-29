@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.1 — 2026-10-29
+
+- Hook-Secret wird als Feld `hook_secret` im JSON-Body erwartet (Gateway entfernt `X-Hook-Secret`)
+- `hook_test` zeigt den Aufruf mit Secret im Body
+- Neue `docs/secrets-checkliste.md`: Herkunft, Eintragung und Rotation aller drei Secrets
+
 ## 1.5.0 — 2026-10-29
 
 - `service_info`: Version, Werkzeugliste, Änderungsverlauf und Secret-Zuständigkeiten
